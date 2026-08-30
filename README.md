@@ -86,6 +86,11 @@ GPIO conflicts with your keyboard matrix. Uncomment + customize:
 };
 ```
 
+> **Note on `rotate-180`:** the reference overlay enables it by default.
+> It flips the image 180° in hardware. If your panel is physically wired
+> the other way up, remove the `rotate-180;` line — otherwise the image
+> will render upside down.
+
 ### 4. Configure Kconfig (optional)
 
 ```conf
