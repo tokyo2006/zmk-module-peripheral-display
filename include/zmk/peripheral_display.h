@@ -5,6 +5,7 @@
 #pragma once
 
 #include <lvgl.h>
+#include <zephyr/sys/slist.h>
 #include <zmk/peripheral_status.h>
 
 #ifdef __cplusplus

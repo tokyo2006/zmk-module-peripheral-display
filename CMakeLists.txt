@@ -27,5 +27,12 @@ endif()
 if(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGETS)
     # T8
     target_sources(app PRIVATE src/peripheral_display.c)
-    # T9 widgets added here
+    # T9 widgets
+    target_sources_ifdef(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_LAYER    app PRIVATE src/widgets/peripheral_layer_status.c)
+    target_sources_ifdef(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_OUTPUT    app PRIVATE src/widgets/peripheral_output_status.c)
+    target_sources_ifdef(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_BATTERY   app PRIVATE src/widgets/peripheral_battery_status.c)
+    target_sources_ifdef(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_MODIFIERS app PRIVATE src/widgets/peripheral_modifiers.c)
+    target_sources_ifdef(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_HID_INDICATORS app PRIVATE src/widgets/peripheral_hid_indicators.c)
+    target_sources_ifdef(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_WPM       app PRIVATE src/widgets/peripheral_wpm_status.c)
+    target_sources_ifdef(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_CENTRAL_NAME app PRIVATE src/widgets/peripheral_central_name.c)
 endif()
