@@ -44,6 +44,8 @@ static uint8_t notify_cb(struct bt_conn *conn, struct bt_gatt_subscribe_params *
     ARG_UNUSED(conn);
     ARG_UNUSED(params);
 
+    LOG_INF("peripheral-display: notify_cb len=%u", length);
+
     if (length != PERIPHERAL_STATUS_PAYLOAD_SIZE) {
         LOG_WRN("status notify: unexpected length %u", length);
         return BT_GATT_ITER_CONTINUE;
@@ -124,6 +126,8 @@ static void connected(struct bt_conn *conn, uint8_t err)
         return;
     }
 
+    LOG_INF("peripheral-display: BLE connected, starting status discovery");
+
     memset(&subscribe_params, 0, sizeof(subscribe_params));
     memset(&disc_char, 0, sizeof(disc_char));
     memset(&disc_desc, 0, sizeof(disc_desc));
@@ -136,7 +140,9 @@ static void connected(struct bt_conn *conn, uint8_t err)
 
     rc = bt_gatt_discover(conn, &disc_char);
     if (rc) {
-        LOG_ERR("Discovery failed (err %d)", rc);
+        LOG_ERR("Characteristic discovery failed (err %d)", rc);
+    } else {
+        LOG_INF("peripheral-display: char discovery in flight");
     }
 }
 
