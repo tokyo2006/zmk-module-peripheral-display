@@ -1,0 +1,18 @@
+# Zephyr / ZMK build artifacts
+build/
+.app/
+.zephyr_*
+.cache/
+
+# Local IDE / tooling
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Tooling sandbox
+.omo/
