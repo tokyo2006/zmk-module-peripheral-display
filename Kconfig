@@ -2,8 +2,6 @@
 config ZMK_PERIPHERAL_DISPLAY
     bool "Peripheral-side status display (zmk-module-peripheral-display)"
     default n
-    select ZMK_DISPLAY
-    select LVGL
     help
       Enable the peripheral display module. The peripheral side of a
       split keyboard renders the central's status (layer, mods, WPM,
@@ -23,7 +21,7 @@ config ZMK_PERIPHERAL_STATUS_FORWARD
 config ZMK_PERIPHERAL_STATUS_RECEIVE
     bool "Enable peripheral-side status receiving"
     default y
-    depends on ZMK_PERIPHERAL_DISPLAY && ZMK_SPLIT_ROLE_PERIPHERAL
+    depends on ZMK_PERIPHERAL_DISPLAY && !ZMK_SPLIT_ROLE_CENTRAL
     help
       Peripheral subscribes to the central's notify characteristic
       and writes incoming data into the shadow state.
@@ -32,7 +30,7 @@ config ZMK_PERIPHERAL_STATUS_RECEIVE
 config ZMK_PERIPHERAL_DISPLAY_WIDGETS
     bool "Build peripheral display widgets and LVGL screen"
     default y
-    depends on ZMK_PERIPHERAL_DISPLAY
+    depends on ZMK_PERIPHERAL_DISPLAY && !ZMK_SPLIT_ROLE_CENTRAL
 
 # T9d modifiers widget style (Mac vs Windows icons).
 # Widgets read IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_MODIFIERS_STYLE_MAC),
