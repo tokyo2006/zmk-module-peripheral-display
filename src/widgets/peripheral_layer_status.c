@@ -28,7 +28,8 @@ void zmk_widget_peripheral_layer_status_update(
     struct peripheral_layer_status_state new_state = {
         .index = s->active_layer,
     };
-    memcpy(new_state.name, s->layer_name, sizeof(new_state.name));
+    memcpy(new_state.name, s->layer_name, 4);
+    new_state.name[4] = '\0';
     if (memcmp(&w->state, &new_state, sizeof(new_state)) == 0) return;
     w->state = new_state;
     set_layer_text(&w->state);

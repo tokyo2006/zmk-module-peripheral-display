@@ -1,7 +1,6 @@
 #include "peripheral_hid_indicators.h"
 #include <lvgl.h>
 #include <string.h>
-#include <zmk/hid.h>
 
 static lv_obj_t *labels[3];
 static const char *const names[3] = {"CAP", "NUM", "SCR"};
@@ -29,10 +28,9 @@ void zmk_widget_peripheral_hid_indicators_update(
     struct zmk_widget_peripheral_hid_indicators *w,
     const struct peripheral_status_adv_data *s)
 {
-    bool caps = (s->status_flags & PERIPHERAL_STATUS_FLAG_CAPS_WORD) ||
-                (zmk_hid_get_indicators() & 0x01);
-    bool num  = zmk_hid_get_indicators() & 0x02;
-    bool scrl = zmk_hid_get_indicators() & 0x04;
+    bool caps = (s->status_flags & PERIPHERAL_STATUS_FLAG_CAPS_WORD) != 0;
+    bool num  = false;
+    bool scrl = false;
 
     struct peripheral_hid_indicators_state new_state = {
         .caps = caps, .num = num, .scroll = scrl,
