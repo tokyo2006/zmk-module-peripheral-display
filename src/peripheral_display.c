@@ -133,7 +133,7 @@ int peripheral_display_init(lv_obj_t *parent) {
 
 #if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_LAYER)
     zmk_widget_peripheral_layer_status_init(&layer_w, parent);
-    lv_obj_align(layer_w.obj, LV_ALIGN_BOTTOM_RIGHT, -28, -2);
+    lv_obj_align(layer_w.obj, LV_ALIGN_CENTER, 0, 0);
 #endif
 #if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_OUTPUT)
     zmk_widget_peripheral_output_status_init(&output_w, parent);
@@ -147,14 +147,17 @@ int peripheral_display_init(lv_obj_t *parent) {
 #if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_HID_INDICATORS)
     zmk_widget_peripheral_hid_indicators_init(&hid_indicators_w, parent);
 #endif
-#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_WPM)
-    zmk_widget_peripheral_wpm_status_init(&wpm_w, parent);
-#endif
 #if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_CENTRAL_NAME)
     zmk_widget_peripheral_central_name_init(&central_name_w, parent);
 #endif
 #if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_BONGO_CAT)
     zmk_widget_peripheral_bongo_cat_init(&bongo_cat_w, parent);
+    /* bongo cat sits slightly above the bottom-right so layer/WPM can go below it */
+    lv_obj_align(bongo_cat_w.obj, LV_ALIGN_BOTTOM_RIGHT, 0, -7);
+#endif
+#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_WPM)
+    zmk_widget_peripheral_wpm_status_init(&wpm_w, parent);
+    lv_obj_align_to(wpm_w.obj, bongo_cat_w.obj, LV_ALIGN_BOTTOM_RIGHT, 0, 5);
 #endif
 
     lv_timer_create(poll_shadow, POLL_MS, NULL);

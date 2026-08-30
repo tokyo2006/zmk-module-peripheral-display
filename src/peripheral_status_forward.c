@@ -12,9 +12,12 @@
 #include <zephyr/init.h>
 #include <zephyr/sys/util.h>
 #include <zephyr/bluetooth/conn.h>
+#include <zephyr/logging/log.h>
 
 #include <zmk/peripheral_status.h>
 #include "peripheral_status_forward_debounce.h"
+
+LOG_MODULE_DECLARE(peripheral_status, CONFIG_ZMK_LOG_LEVEL);
 
 #if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL) || !IS_ENABLED(CONFIG_ZMK_SPLIT)
 #include <zmk/keymap.h>
@@ -114,7 +117,9 @@ static void pack_and_send(bool force) {
     fill_current_state(&s);
     uint8_t buf[PERIPHERAL_STATUS_PAYLOAD_SIZE];
     if (peripheral_status_pack(&s, buf, sizeof(buf)) != 0) return;
-    peripheral_status_notify(buf, sizeof(buf));
+    int err = peripheral_status_notify(buf, sizeof(buf));
+    LOG_INF("peripheral-display: forward notify err=%d batt=%u layer=%u", err,
+            (unsigned)s.battery_level, (unsigned)s.active_layer);
 }
 
 /* --- Connection + heartbeat: push current state on connect and every 1s --- */
