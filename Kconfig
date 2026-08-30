@@ -50,3 +50,46 @@ config ZMK_PERIPHERAL_DISPLAY_MODIFIERS_STYLE_WIN
 config ZMK_PERIPHERAL_DISPLAY_MODIFIERS_STYLE_MAC
     bool "Mac icons"
 endchoice
+
+# Per-widget toggles (T8/T9). Each widget's .c is compiled and its init
+# call uncommented in peripheral_display.c when its symbol is enabled.
+
+config ZMK_PERIPHERAL_DISPLAY_WIDGET_LAYER
+    bool "Layer status widget"
+    default y
+    depends on ZMK_PERIPHERAL_DISPLAY_WIDGETS
+
+config ZMK_PERIPHERAL_DISPLAY_WIDGET_OUTPUT
+    bool "Output status widget"
+    default y
+    depends on ZMK_PERIPHERAL_DISPLAY_WIDGETS
+
+config ZMK_PERIPHERAL_DISPLAY_WIDGET_BATTERY
+    bool "Battery status widget"
+    default y
+    depends on ZMK_PERIPHERAL_DISPLAY_WIDGETS
+
+config ZMK_PERIPHERAL_DISPLAY_WIDGET_MODIFIERS
+    bool "Modifiers widget"
+    default y
+    depends on ZMK_PERIPHERAL_DISPLAY_WIDGETS
+
+config ZMK_PERIPHERAL_DISPLAY_WIDGET_HID_INDICATORS
+    bool "HID indicators widget"
+    default y
+    depends on ZMK_PERIPHERAL_DISPLAY_WIDGETS
+
+config ZMK_PERIPHERAL_DISPLAY_WIDGET_WPM
+    bool "WPM widget"
+    default y
+    depends on ZMK_PERIPHERAL_DISPLAY_WIDGETS
+
+config ZMK_PERIPHERAL_DISPLAY_WIDGET_CENTRAL_NAME
+    bool "Central name widget"
+    default n
+    depends on ZMK_PERIPHERAL_DISPLAY_WIDGETS
+
+config ZMK_PERIPHERAL_DISPLAY_WIDGET_BONGO_CAT
+    bool "Bongo cat widget"
+    default y
+    depends on ZMK_PERIPHERAL_DISPLAY_WIDGETS

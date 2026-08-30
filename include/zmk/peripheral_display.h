@@ -29,12 +29,6 @@ struct zmk_widget_peripheral_bongo_cat;
  */
 int peripheral_display_init(lv_obj_t *parent);
 
-/**
- * @brief LVGL timer callback. Polls the shadow and redraws dirty ones.
- *        Registered in T8.
- */
-void peripheral_display_timer_cb(lv_timer_t *t);
-
 /* ZMK_PERIPHERAL_DISPLAY_WIDGET base macro — used by every widget in T9
  * to avoid copy-paste boilerplate. Defines the standard fields
  * (obj, sys_slist_node, last_state) the widget update functions expect. */
