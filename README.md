@@ -1,5 +1,7 @@
 # zmk-module-peripheral-display
 
+[中文文档](README.zh-CN.md)
+
 A ZMK module that drives a **peripheral-side** Sharp LS013B7DH03
 128×128 monochrome memory LCD, showing the central side's keyboard
 status in real time. No separate dongle required.
