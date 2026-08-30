@@ -5,7 +5,10 @@
 #include <string.h>
 #include <errno.h>
 #include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
 #include <zmk/peripheral_status.h>
+
+LOG_MODULE_REGISTER(peripheral_status, CONFIG_ZMK_LOG_LEVEL);
 
 int peripheral_status_pack(const struct peripheral_status_adv_data *data,
                            uint8_t *buf, size_t buf_len)

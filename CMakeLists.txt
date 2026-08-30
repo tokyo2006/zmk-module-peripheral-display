@@ -16,6 +16,7 @@ endif()
 if(CONFIG_ZMK_PERIPHERAL_STATUS_FORWARD)
     # T6
     target_sources(app PRIVATE src/peripheral_status_forward.c)
+    target_sources(app PRIVATE src/peripheral_status_forward_debounce.c)
 endif()
 
 if(CONFIG_ZMK_PERIPHERAL_STATUS_RECEIVE)
