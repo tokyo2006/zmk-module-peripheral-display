@@ -1,3 +1,9 @@
+# NOTE: this workflow runs ONLY native_posix unit tests. It CANNOT build the
+# full shield firmware standalone: a shield build requires a keyboard shield
+# config plus an external board repo (e.g. a741725193/zmk-board-eyelash),
+# which this module does not depend on. Full-firmware build validation is
+# therefore delegated to downstream user keyboard repositories via their own
+# GitHub Actions (per the spec §10.1). Do not add a firmware build job here.
 name: Build
 
 on:

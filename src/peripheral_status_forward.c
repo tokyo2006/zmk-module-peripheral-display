@@ -12,6 +12,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/init.h>
 #include <zephyr/sys/util.h>
+#include <zephyr/bluetooth/conn.h>
 
 #include <zmk/peripheral_status.h>
 #include "peripheral_status_forward_debounce.h"
@@ -104,13 +105,47 @@ static void fill_current_state(struct peripheral_status_adv_data *s) {
     s->wpm_value = (uint8_t)wpm;
 }
 
-static void pack_and_send(void) {
+static void pack_and_send(bool force) {
+    if (!peripheral_status_should_fire(&debounce, KEY_ACTIVITY, k_uptime_get_32(), force)) {
+        return;
+    }
     struct peripheral_status_adv_data s;
     fill_current_state(&s);
     uint8_t buf[PERIPHERAL_STATUS_PAYLOAD_SIZE];
     if (peripheral_status_pack(&s, buf, sizeof(buf)) != 0) return;
     peripheral_status_notify(buf, sizeof(buf));
 }
+
+/* --- Connection + heartbeat: push current state on connect and every 1s --- */
+
+static void connected(struct bt_conn *conn, uint8_t err) {
+    ARG_UNUSED(conn);
+    if (err) {
+        return;
+    }
+    /* Push current status immediately when a peripheral connects. */
+    pack_and_send(true);
+}
+
+BT_CONN_CB_DEFINE(peripheral_status_conn_callbacks) = {
+    .connected = connected,
+};
+
+static void heartbeat_work_handler(struct k_work *work) {
+    ARG_UNUSED(work);
+    /* force=true bypasses the per-key debounce windows so the heartbeat
+     * always emits a fresh status payload. */
+    pack_and_send(true);
+}
+
+K_WORK_DEFINE(heartbeat_work, heartbeat_work_handler);
+
+static void heartbeat_timer_handler(struct k_timer *timer) {
+    ARG_UNUSED(timer);
+    k_work_submit(&heartbeat_work);
+}
+
+K_TIMER_DEFINE(heartbeat_timer, heartbeat_timer_handler, NULL);
 
 /* --- Event listeners: each debounces by KEY_<name>, then pack+notify --- */
 
@@ -119,7 +154,7 @@ static int on_layer_changed(const zmk_event_t *eh) {
     if (!peripheral_status_should_fire(&debounce, KEY_LAYER, k_uptime_get_32(), 0)) {
         return ZMK_EV_EVENT_BUBBLE;
     }
-    pack_and_send();
+    pack_and_send(false);
     return ZMK_EV_EVENT_BUBBLE;
 }
 ZMK_LISTENER(peripheral_status_layer, on_layer_changed);
@@ -130,7 +165,7 @@ static int on_mods_changed(const zmk_event_t *eh) {
     if (!peripheral_status_should_fire(&debounce, KEY_MODS, k_uptime_get_32(), 0)) {
         return ZMK_EV_EVENT_BUBBLE;
     }
-    pack_and_send();
+    pack_and_send(false);
     return ZMK_EV_EVENT_BUBBLE;
 }
 ZMK_LISTENER(peripheral_status_mods, on_mods_changed);
@@ -141,7 +176,7 @@ static int on_battery_changed(const zmk_event_t *eh) {
     if (!peripheral_status_should_fire(&debounce, KEY_BATTERY, k_uptime_get_32(), 0)) {
         return ZMK_EV_EVENT_BUBBLE;
     }
-    pack_and_send();
+    pack_and_send(false);
     return ZMK_EV_EVENT_BUBBLE;
 }
 ZMK_LISTENER(peripheral_status_battery, on_battery_changed);
@@ -152,7 +187,7 @@ static int on_wpm_changed(const zmk_event_t *eh) {
     if (!peripheral_status_should_fire(&debounce, KEY_WPM, k_uptime_get_32(), 0)) {
         return ZMK_EV_EVENT_BUBBLE;
     }
-    pack_and_send();
+    pack_and_send(false);
     return ZMK_EV_EVENT_BUBBLE;
 }
 ZMK_LISTENER(peripheral_status_wpm, on_wpm_changed);
@@ -163,7 +198,7 @@ static int on_output_changed(const zmk_event_t *eh) {
     if (!peripheral_status_should_fire(&debounce, KEY_OUTPUT, k_uptime_get_32(), 0)) {
         return ZMK_EV_EVENT_BUBBLE;
     }
-    pack_and_send();
+    pack_and_send(false);
     return ZMK_EV_EVENT_BUBBLE;
 }
 ZMK_LISTENER(peripheral_status_output, on_output_changed);
@@ -174,7 +209,7 @@ static int on_endpoint_changed(const zmk_event_t *eh) {
     if (!peripheral_status_should_fire(&debounce, KEY_ENDPOINT, k_uptime_get_32(), 0)) {
         return ZMK_EV_EVENT_BUBBLE;
     }
-    pack_and_send();
+    pack_and_send(false);
     return ZMK_EV_EVENT_BUBBLE;
 }
 ZMK_LISTENER(peripheral_status_endpoint, on_endpoint_changed);
@@ -185,7 +220,7 @@ static int on_hid_changed(const zmk_event_t *eh) {
     if (!peripheral_status_should_fire(&debounce, KEY_HID, k_uptime_get_32(), 0)) {
         return ZMK_EV_EVENT_BUBBLE;
     }
-    pack_and_send();
+    pack_and_send(false);
     return ZMK_EV_EVENT_BUBBLE;
 }
 ZMK_LISTENER(peripheral_status_hid, on_hid_changed);
@@ -196,7 +231,7 @@ static int on_activity_changed(const zmk_event_t *eh) {
     if (!peripheral_status_should_fire(&debounce, KEY_ACTIVITY, k_uptime_get_32(), 0)) {
         return ZMK_EV_EVENT_BUBBLE;
     }
-    pack_and_send();
+    pack_and_send(false);
     return ZMK_EV_EVENT_BUBBLE;
 }
 ZMK_LISTENER(peripheral_status_activity, on_activity_changed);
@@ -205,7 +240,9 @@ ZMK_SUBSCRIPTION(peripheral_status_activity, zmk_activity_state_changed);
 static int peripheral_status_forward_init(const struct device *device) {
     ARG_UNUSED(device);
     /* Event listeners register themselves via ZMK_LISTENER/ZMK_SUBSCRIPTION
-     * linker sections. Nothing else to do at init. */
+     * linker sections. Start the 1Hz heartbeat timer that pushes the
+     * current status to a connected peripheral. */
+    k_timer_start(&heartbeat_timer, K_SECONDS(1), K_SECONDS(1));
     return 0;
 }
 SYS_INIT(peripheral_status_forward_init, APPLICATION, 99);

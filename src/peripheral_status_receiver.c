@@ -24,7 +24,15 @@
 
 LOG_MODULE_DECLARE(peripheral_status, CONFIG_ZMK_LOG_LEVEL);
 
-static struct bt_gatt_discover_params discover_params;
+/*
+ * Two separate discover params structs: `disc_char` drives the
+ * characteristic discovery, `disc_desc` drives the CCC descriptor
+ * discovery. They must be distinct so that starting the descriptor
+ * discovery (from the characteristic discovery's completion path)
+ * never clobbers the struct the first discovery is still walking.
+ */
+static struct bt_gatt_discover_params disc_char;
+static struct bt_gatt_discover_params disc_desc;
 static struct bt_gatt_subscribe_params subscribe_params;
 
 static uint8_t notify_cb(struct bt_conn *conn, struct bt_gatt_subscribe_params *params,
@@ -59,29 +67,36 @@ static uint8_t discover_func(struct bt_conn *conn,
     int err;
 
     if (!attr) {
-        LOG_DBG("Discovery complete");
-        (void)memset(params, 0, sizeof(*params));
+        if (params->type == BT_GATT_DISCOVER_CHARACTERISTIC) {
+            /*
+             * Characteristic discovery finished. Start the CCC
+             * descriptor discovery using the second params struct.
+             */
+            disc_desc.uuid = BT_UUID_GATT_CCC;
+            disc_desc.func = discover_func;
+            disc_desc.start_handle = subscribe_params.value_handle + 1;
+            disc_desc.end_handle = BT_ATT_LAST_ATTRIBUTE_HANDLE;
+            disc_desc.type = BT_GATT_DISCOVER_DESCRIPTOR;
+
+            err = bt_gatt_discover(conn, &disc_desc);
+            if (err) {
+                LOG_WRN("CCC discovery failed (err %d)", err);
+            }
+        } else {
+            LOG_DBG("Discovery complete");
+        }
         return BT_GATT_ITER_STOP;
     }
 
     if (params->type == BT_GATT_DISCOVER_CHARACTERISTIC) {
         /*
          * Found the status characteristic. Record its value handle, then
-         * discover the CCC descriptor that follows it.
+         * let the characteristic discovery run to completion (attr == NULL)
+         * before starting the CCC discovery, so the first discovery's
+         * params struct is not reused mid-flight.
          */
         subscribe_params.value_handle = bt_gatt_attr_value_handle(attr);
-
-        discover_params.uuid = BT_UUID_GATT_CCC;
-        discover_params.start_handle = attr->handle + 2;
-        discover_params.end_handle = BT_ATT_LAST_ATTRIBUTE_HANDLE;
-        discover_params.type = BT_GATT_DISCOVER_DESCRIPTOR;
-
-        err = bt_gatt_discover(conn, &discover_params);
-        if (err) {
-            LOG_WRN("CCC discovery failed (err %d)", err);
-        }
-
-        return BT_GATT_ITER_STOP;
+        return BT_GATT_ITER_CONTINUE;
     }
 
     /* Found the CCC descriptor: subscribe to notifications. */
@@ -109,14 +124,16 @@ static void connected(struct bt_conn *conn, uint8_t err)
     }
 
     memset(&subscribe_params, 0, sizeof(subscribe_params));
+    memset(&disc_char, 0, sizeof(disc_char));
+    memset(&disc_desc, 0, sizeof(disc_desc));
 
-    discover_params.uuid = PERIPHERAL_STATUS_CHRC_UUID;
-    discover_params.func = discover_func;
-    discover_params.start_handle = BT_ATT_FIRST_ATTRIBUTE_HANDLE;
-    discover_params.end_handle = BT_ATT_LAST_ATTRIBUTE_HANDLE;
-    discover_params.type = BT_GATT_DISCOVER_CHARACTERISTIC;
+    disc_char.uuid = PERIPHERAL_STATUS_CHRC_UUID;
+    disc_char.func = discover_func;
+    disc_char.start_handle = BT_ATT_FIRST_ATTRIBUTE_HANDLE;
+    disc_char.end_handle = BT_ATT_LAST_ATTRIBUTE_HANDLE;
+    disc_char.type = BT_GATT_DISCOVER_CHARACTERISTIC;
 
-    rc = bt_gatt_discover(conn, &discover_params);
+    rc = bt_gatt_discover(conn, &disc_char);
     if (rc) {
         LOG_ERR("Discovery failed (err %d)", rc);
     }
