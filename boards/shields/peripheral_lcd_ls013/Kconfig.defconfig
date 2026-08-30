@@ -33,4 +33,10 @@ config LV_DPI_DEF
 config LV_Z_BITS_PER_PIXEL
     default 1
 
+# Force full refresh every frame so partial-update never leaves stale
+# pixels in the corners. With LV_Z_VDB_SIZE=100 (= full 128x128 buffer)
+# this gives us a real full-framebuffer + full-refresh pipeline.
+config LV_Z_FULL_REFRESH
+    default y
+
 endif
