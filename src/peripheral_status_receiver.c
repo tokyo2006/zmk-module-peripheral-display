@@ -21,8 +21,8 @@ LOG_MODULE_DECLARE(peripheral_status, CONFIG_ZMK_LOG_LEVEL);
 
 #if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_STATUS_RECEIVE)
 
-static void asdc_rx_cb(const struct device *dev, void *sender_conn,
-                       uint8_t *data, size_t len)
+static void on_status_data(const struct device *dev, void *sender_conn,
+                           uint8_t *data, size_t len)
 {
     ARG_UNUSED(dev);
     ARG_UNUSED(sender_conn);
@@ -50,7 +50,7 @@ static int peripheral_status_receiver_init(const struct device *device) {
         LOG_WRN("peripheral-display: asdc0 not ready");
         return -ENODEV;
     }
-    asdc_register_recv_cb(dev, asdc_rx_cb);
+    asdc_register_recv_cb(dev, on_status_data);
     LOG_INF("peripheral-display: registered ASDC receive callback");
     return 0;
 }
