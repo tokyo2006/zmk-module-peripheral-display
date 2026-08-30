@@ -31,7 +31,15 @@ manifest:
     - name: zmk-module-peripheral-display
       remote: tokyo2006
       revision: main
+    - name: zmk-ls0xxvcom-driver
+      remote: tokyo2006
+      revision: main
 ```
+
+The `zmk-ls0xxvcom-driver` project is the display driver used by default
+(see [Display driver](#display-driver) below). If you prefer the
+Zephyr built-in driver instead, omit it and follow the alternative in
+that section.
 
 ### 2. Add to `build.yaml`
 
@@ -63,12 +71,17 @@ GPIO conflicts with your keyboard matrix. Uncomment + customize:
     pinctrl-names = "default";
     cs-gpios = <&gpio0 31 GPIO_ACTIVE_LOW>;   /* pick a free GPIO */
     ls013: ls013b7dh03@0 {
-        compatible = "sharp,ls0xx";
+        compatible = "sharp,ls0xx-vcom";
         reg = <0>;
         spi-max-frequency = <2000000>;
         width = <128>;
         height = <128>;
+        /* VCOM inversion + DMA batching + native rotation */
         serial-vcom-inversion;
+        serial-vcom-interval = <17>;
+        idle-vcom-interval = <100>;
+        dma-mode;
+        rotate-180;
     };
 };
 ```
@@ -82,24 +95,43 @@ CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_BONGO_CAT=y
 CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_WPM=n
 ```
 
-## Using the third-party `sharp,ls0xx-vcom` driver (optional)
+## Display driver
 
-For DMA + hardware rotation + dual VCOM intervals. The display driver
-is configured purely in devicetree — there is no Kconfig switch for it.
+The default driver is the third-party [`sharp,ls0xx-vcom`](https://github.com/tokyo2006/zmk-ls0xxvcom-driver),
+which adds:
 
-1. Add the driver to `west.yml`:
-```yaml
-   manifest:
-     remotes:
-       - name: tokyo2006
-         url-base: https://github.com/tokyo2006
-     projects:
-       - name: zmk-ls0xxvcom-driver
-         remote: tokyo2006
-         revision: main
+- **DMA batching** (`dma-mode`) — frames sent in a single hardware DMA
+  transaction, cutting active CPU interrupt overhead by over 99%.
+- **Hardware 180° rotation** (`rotate-180`) — flips output natively with
+  near-zero overhead, avoiding software-rotation CPU/RAM cost.
+- **Dual VCOM intervals** — fast while active (`serial-vcom-interval`,
+  flicker-free) and slow while idle (`idle-vcom-interval`, saves battery).
+- **Balanced VCOM inversion** — strict 50% duty cycle to prevent DC-bias
+  capacitive buildup and permanent display damage.
+
+The driver is configured purely in devicetree — there is no Kconfig
+switch for it.
+
+### Alternative: Zephyr built-in `sharp,ls0xx`
+
+If you don't want the extra module dependency, omit
+`zmk-ls0xxvcom-driver` from `west.yml` and use the Zephyr built-in
+driver instead. Change the display node to:
+
+```devicetree
+ls013: ls013b7dh03@0 {
+    compatible = "sharp,ls0xx";
+    reg = <0>;
+    spi-max-frequency = <2000000>;
+    width = <128>;
+    height = <128>;
+    serial-vcom-inversion;
+};
 ```
-2. In your display overlay, change `compatible = "sharp,ls0xx-vcom";`
-   and add `dma-mode;` + `rotate-180;`
+
+ZMK main / Zephyr 4.x already supports VCOM inversion in this driver;
+it simply lacks DMA batching, hardware rotation, and the dual VCOM
+intervals of the third-party driver.
 
 ## Manual hardware test (no automation)
 

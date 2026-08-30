@@ -23,12 +23,16 @@
     pinctrl-names = "default";
     cs-gpios = <&gpio0 9 GPIO_ACTIVE_LOW>;  // <-- user changes this
     ls013: ls013b7dh03@0 {
-        compatible = "sharp,ls0xx";  // or "sharp,ls0xx-vcom" if using third-party driver
+        compatible = "sharp,ls0xx-vcom";  // use "sharp,ls0xx" for the Zephyr built-in driver
         reg = <0>;
         spi-max-frequency = <2000000>;
         width = <128>;
         height = <128>;
         serial-vcom-inversion;
+        serial-vcom-interval = <17>;
+        idle-vcom-interval = <100>;
+        dma-mode;
+        rotate-180;
         // Optional:
         // disp-en-gpios = <&gpio0 30 GPIO_ACTIVE_HIGH>;
         // extcomin-gpios = <&gpio0 29 GPIO_ACTIVE_HIGH>;
