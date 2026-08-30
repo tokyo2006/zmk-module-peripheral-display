@@ -109,6 +109,13 @@ static void poll_shadow(lv_timer_t *t) {
 }
 
 int peripheral_display_init(lv_obj_t *parent) {
+    /* The status screen must be sized before children align against it.
+     * `zmk_display_status_screen()` creates the screen with lv_obj_create(NULL)
+     * and `lv_scr_load()` (which normally sizes it to the display) runs AFTER
+     * this init, so children were aligning against a 0x0 parent and all piled
+     * up top-left. Pin it to the panel's 128x128 here so LV_ALIGN_* works. */
+    lv_obj_set_size(parent, 128, 128);
+
     /* Global style.
      *
      * NOTE: colors are intentionally inverted. LVGL 4.1's Zephyr mono

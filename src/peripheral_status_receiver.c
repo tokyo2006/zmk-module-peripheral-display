@@ -128,22 +128,6 @@ static void connected(struct bt_conn *conn, uint8_t err)
 
     LOG_INF("peripheral-display: BLE connected, starting status discovery");
 
-    /* DEBUG: write a fake shadow so the widgets render immediately and we
-     * can tell whether the issue is in the notify path or the display
-     * pipeline. Remove once notify works. */
-    {
-        struct peripheral_status_adv_data fake = {
-            .manufacturer_id = {0xFF, 0xFF},
-            .service_uuid    = {0xAB, 0xCD},
-            .version         = 0x22,
-            .battery_level   = 99,
-            .active_layer    = 1,
-            .layer_name = "DBG",
-            .wpm_value       = 0,
-        };
-        peripheral_status_shadow_set(&fake);
-    }
-
     memset(&subscribe_params, 0, sizeof(subscribe_params));
     memset(&disc_char, 0, sizeof(disc_char));
     memset(&disc_desc, 0, sizeof(disc_desc));
