@@ -1,0 +1,52 @@
+# Top-level gate
+config ZMK_PERIPHERAL_DISPLAY
+    bool "Peripheral-side status display (zmk-module-peripheral-display)"
+    default n
+    select ZMK_DISPLAY
+    select LVGL
+    help
+      Enable the peripheral display module. The peripheral side of a
+      split keyboard renders the central's status (layer, mods, WPM,
+      battery, HID, output, bongo cat) on a Sharp LS013B7DH03
+      128x128 mono memory LCD.
+
+# T6 forward
+config ZMK_PERIPHERAL_STATUS_FORWARD
+    bool "Enable central-side status forwarding"
+    default y
+    depends on ZMK_PERIPHERAL_DISPLAY && ZMK_SPLIT_ROLE_CENTRAL
+    help
+      Central packs zmk_status_adv_data and notifies the peripheral
+      over a custom GATT characteristic.
+
+# T7 receive
+config ZMK_PERIPHERAL_STATUS_RECEIVE
+    bool "Enable peripheral-side status receiving"
+    default y
+    depends on ZMK_PERIPHERAL_DISPLAY && ZMK_SPLIT_ROLE_PERIPHERAL
+    help
+      Peripheral subscribes to the central's notify characteristic
+      and writes incoming data into the shadow state.
+
+# T8 widgets gate (referenced by T8's CMakeLists line above)
+config ZMK_PERIPHERAL_DISPLAY_WIDGETS
+    bool "Build peripheral display widgets and LVGL screen"
+    default y
+    depends on ZMK_PERIPHERAL_DISPLAY
+
+# T9d modifiers widget style (Mac vs Windows icons).
+# Widgets read IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_MODIFIERS_STYLE_MAC),
+# so this must be a real boolean symbol (not an integer).
+choice ZMK_PERIPHERAL_DISPLAY_MODIFIERS_STYLE
+    prompt "Modifier icon style"
+    default ZMK_PERIPHERAL_DISPLAY_MODIFIERS_STYLE_WIN
+    help
+      0 = Windows icons (WIN/Ctrl/Alt/Shift)
+      1 = Mac icons (⌘ ⌥ ⌃ ⇧)
+
+config ZMK_PERIPHERAL_DISPLAY_MODIFIERS_STYLE_WIN
+    bool "Windows icons"
+
+config ZMK_PERIPHERAL_DISPLAY_MODIFIERS_STYLE_MAC
+    bool "Mac icons"
+endchoice
