@@ -7,20 +7,19 @@ zephyr_include_directories(include)
 # (filled in by later tasks; left empty here so the module builds
 #  even when the feature is disabled)
 if(CONFIG_ZMK_PERIPHERAL_DISPLAY)
-    # T3, T4
+    # shared status pack/unpack + shadow state
     target_sources(app PRIVATE src/peripheral_status.c)
-    # T5
-    target_sources(app PRIVATE src/peripheral_status_service.c)
+    # shared relay event definition (central forwards, peripheral receives)
+    target_sources(app PRIVATE src/peripheral_status_event.c)
 endif()
 
 if(CONFIG_ZMK_PERIPHERAL_STATUS_FORWARD)
-    # T6
+    # central: subscribe ZMK events -> raise status event -> relay to peripheral
     target_sources(app PRIVATE src/peripheral_status_forward.c)
-    target_sources(app PRIVATE src/peripheral_status_forward_debounce.c)
 endif()
 
 if(CONFIG_ZMK_PERIPHERAL_STATUS_RECEIVE)
-    # T7
+    # peripheral: receive relayed status event -> update shadow
     target_sources(app PRIVATE src/peripheral_status_receiver.c)
 endif()
 
