@@ -109,12 +109,19 @@ static void poll_shadow(lv_timer_t *t) {
 }
 
 int peripheral_display_init(lv_obj_t *parent) {
-    /* Global style: black bg, white text (mono LCD convention). */
+    /* Global style.
+     *
+     * NOTE: colors are intentionally inverted. LVGL 4.1's Zephyr mono
+     * integration (`lvgl_display_mono.c` / `lvgl_transform_buffer`) inverts
+     * the draw buffer relative to the MONO01 pixel format the Sharp driver
+     * reports. So to get a black background + white text on the panel we set
+     * bg = white and text = black here. Bitmap widgets (bongo cat) are
+     * unaffected because they carry their own pixel data. */
     static lv_style_t style;
     lv_style_init(&style);
-    lv_style_set_bg_color(&style, lv_color_black());
+    lv_style_set_bg_color(&style, lv_color_white());
     lv_style_set_bg_opa(&style, LV_OPA_COVER);
-    lv_style_set_text_color(&style, lv_color_white());
+    lv_style_set_text_color(&style, lv_color_black());
     lv_obj_add_style(parent, &style, LV_PART_MAIN);
 
 #if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_LAYER)
