@@ -13,11 +13,11 @@ int zmk_widget_peripheral_output_status_init(
     lv_obj_set_style_bg_opa(row, LV_OPA_TRANSP, 0);
 
     usb_label = lv_label_create(row);
-    lv_label_set_text(usb_label, LV_SYMBOL_USB " ");
+    lv_label_set_text(usb_label, "USB ");
     lv_obj_align(usb_label, LV_ALIGN_LEFT_MID, 0, 0);
 
     ble_label = lv_label_create(row);
-    lv_label_set_text(ble_label, LV_SYMBOL_BLUETOOTH);
+    lv_label_set_text(ble_label, "BLE");
     lv_obj_align(ble_label, LV_ALIGN_RIGHT_MID, 0, 0);
 
     lv_obj_align(row, LV_ALIGN_TOP_LEFT, 0, 0);
@@ -37,9 +37,9 @@ void zmk_widget_peripheral_output_status_update(
     };
     if (memcmp(&w->state, &new_state, sizeof(new_state)) == 0) return;
     w->state = new_state;
-    /* Symbols in LVGL mono: invert active icon to white-on-black. */
+    /* Dim the inactive output; keep both visible. */
     lv_obj_set_style_text_opa(usb_label,
-        usb ? LV_OPA_COVER : LV_OPA_30, 0);
+        usb ? LV_OPA_COVER : LV_OPA_60, 0);
     lv_obj_set_style_text_opa(ble_label,
-        ble ? LV_OPA_COVER : LV_OPA_30, 0);
+        ble ? LV_OPA_COVER : LV_OPA_60, 0);
 }

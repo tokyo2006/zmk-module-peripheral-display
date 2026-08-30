@@ -29,7 +29,7 @@ int zmk_widget_peripheral_modifiers_init(
         char g = glyph_for((uint8_t)i, mac);
         lv_label_set_text_fmt(boxes[i], "%c", g);
         lv_obj_align(boxes[i], LV_ALIGN_LEFT_MID, i * 8, 0);
-        lv_obj_set_style_text_opa(boxes[i], LV_OPA_30, 0);
+        lv_obj_set_style_text_opa(boxes[i], LV_OPA_60, 0);
     }
     lv_obj_align(row, LV_ALIGN_BOTTOM_LEFT, 0, 0);
     w->obj = row;
@@ -46,6 +46,6 @@ void zmk_widget_peripheral_modifiers_update(
     for (int i = 0; i < 8; i++) {
         bool on = (s->modifier_flags >> i) & 1;
         lv_obj_set_style_text_opa(boxes[i],
-            on ? LV_OPA_COVER : LV_OPA_30, 0);
+            on ? LV_OPA_COVER : LV_OPA_60, 0);
     }
 }

@@ -17,6 +17,7 @@ int zmk_widget_peripheral_layer_status_init(
 {
     label = lv_label_create(p);
     lv_obj_set_style_text_font(label, &lv_font_unscii_8, 0);
+    lv_label_set_text(label, "L0");
     w->obj = label;
     return 0;
 }
