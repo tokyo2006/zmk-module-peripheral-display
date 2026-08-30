@@ -14,4 +14,10 @@ void zmk_widget_peripheral_bongo_cat_update(
     const struct peripheral_status_adv_data *s);
 
 extern const lv_img_dsc_t peripheral_bongo_cat_none;
+extern const lv_img_dsc_t peripheral_bongo_cat_left1;
+extern const lv_img_dsc_t peripheral_bongo_cat_left2;
+extern const lv_img_dsc_t peripheral_bongo_cat_right1;
+extern const lv_img_dsc_t peripheral_bongo_cat_right2;
 extern const lv_img_dsc_t peripheral_bongo_cat_both1;
+extern const lv_img_dsc_t peripheral_bongo_cat_both1_open;
+extern const lv_img_dsc_t peripheral_bongo_cat_both2;
