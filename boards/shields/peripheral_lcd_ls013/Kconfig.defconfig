@@ -25,7 +25,7 @@ choice LV_COLOR_DEPTH
 endchoice
 
 config LV_Z_MEM_POOL_SIZE
-    default 16384
+    default 32768
 
 config LV_DPI_DEF
     default 148
