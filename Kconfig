@@ -91,3 +91,6 @@ config ZMK_PERIPHERAL_DISPLAY_WIDGET_BONGO_CAT
     bool "Bongo cat widget"
     default y
     depends on ZMK_PERIPHERAL_DISPLAY_WIDGETS
+
+# ASDC BLE L2CAP data channel (central -> peripheral)
+rsource "src/asdc/Kconfig"

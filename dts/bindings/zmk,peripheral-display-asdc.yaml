@@ -1,0 +1,11 @@
+
+description: |
+  Allows defining arbitrary split data channel
+
+compatible: "zmk,peripheral-display-asdc"
+
+properties:
+  channel-id:
+    type: int
+    required: true
+    description: the id of this data channel, an integer.

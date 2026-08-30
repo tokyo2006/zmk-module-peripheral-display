@@ -3,20 +3,20 @@
  * SPDX-License-Identifier: MIT
  *
  * Central-side forward: subscribe to ZMK status events, rebuild the current
- * state, and raise a `peripheral_status_update` event. The
- * ZMK_RELAY_EVENT_CENTRAL_TO_PERIPHERAL() macro below ships that event to
- * the peripheral half over the standard split relay transport (no custom
- * GATT service needed).
+ * state, and send it to the peripheral over the ASDC BLE L2CAP data channel
+ * (see src/asdc). The peripheral's ASDC receive callback feeds the local
+ * shadow state that the display widgets poll.
  */
 
 #include <string.h>
 #include <zephyr/kernel.h>
 #include <zephyr/init.h>
 #include <zephyr/sys/util.h>
+#include <zephyr/device.h>
 #include <zephyr/logging/log.h>
 
 #include <zmk/peripheral_status.h>
-#include <zmk/peripheral_status_event.h>
+#include <zmk/asdc.h>
 
 LOG_MODULE_DECLARE(peripheral_status, CONFIG_ZMK_LOG_LEVEL);
 
@@ -107,19 +107,26 @@ static void fill_current_state(struct peripheral_status_adv_data *s) {
 }
 
 static void raise_status(void) {
-    struct peripheral_status_update ev = {0};
-    fill_current_state(&ev.data);
-    LOG_INF("peripheral-display: raise batt=%u layer=%u flags=0x%02x",
-            (unsigned)ev.data.battery_level, (unsigned)ev.data.active_layer,
-            (unsigned)ev.data.status_flags);
-    int err = raise_peripheral_status_update(ev);
-    if (err) {
-        LOG_WRN("peripheral-display: raise failed err=%d batt=%u layer=%u", err,
-                (unsigned)ev.data.battery_level, (unsigned)ev.data.active_layer);
+    struct peripheral_status_adv_data s;
+    fill_current_state(&s);
+
+    const struct device *dev = DEVICE_DT_GET(DT_NODELABEL(asdc0));
+    if (!device_is_ready(dev)) {
+        LOG_WRN("peripheral-display: asdc0 not ready");
+        return;
+    }
+
+    LOG_INF("peripheral-display: send batt=%u layer=%u flags=0x%02x",
+            (unsigned)s.battery_level, (unsigned)s.active_layer,
+            (unsigned)s.status_flags);
+
+    int err = asdc_send(dev, (const uint8_t *)&s, sizeof(s), 0);
+    if (err < 0) {
+        LOG_WRN("peripheral-display: asdc send failed err=%d", err);
     }
 }
 
-/* --- Heartbeat: periodically re-raise so the peripheral always has fresh state --- */
+/* --- Heartbeat: periodically re-send so the peripheral always has fresh state --- */
 
 static void heartbeat_work_handler(struct k_work *work) {
     ARG_UNUSED(work);
@@ -135,7 +142,7 @@ static void heartbeat_timer_handler(struct k_timer *timer) {
 
 K_TIMER_DEFINE(heartbeat_timer, heartbeat_timer_handler, NULL);
 
-/* --- Event listeners: re-raise a full status snapshot on any change --- */
+/* --- Event listeners: re-send a full status snapshot on any change --- */
 
 static int on_layer_changed(const zmk_event_t *eh) {
     ARG_UNUSED(eh);
@@ -200,10 +207,6 @@ static int on_activity_changed(const zmk_event_t *eh) {
 }
 ZMK_LISTENER(peripheral_status_activity, on_activity_changed);
 ZMK_SUBSCRIPTION(peripheral_status_activity, zmk_activity_state_changed);
-
-/* Central -> peripheral relay definition: ships every peripheral_status_update
- * event to the peripheral half using the standard split relay transport. */
-ZMK_RELAY_EVENT_CENTRAL_TO_PERIPHERAL(peripheral_status_update, pd, )
 
 static int peripheral_status_forward_init(const struct device *device) {
     ARG_UNUSED(device);
