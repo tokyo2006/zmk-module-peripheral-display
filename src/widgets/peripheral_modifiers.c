@@ -1,36 +1,54 @@
 #include "peripheral_modifiers.h"
+#include "peripheral_icons.h"
 #include <lvgl.h>
 #include <string.h>
 
-/* Bit order: LCTL LSFT LALT LGUI RCTL RSFT RALT RGUI.
- * Each bit renders its glyph in a small box. */
-static lv_obj_t *row;
-static lv_obj_t *boxes[8];
+/*
+ * Modifier icons (14x14 bitmaps from zmk-dongle-display). Each symbol
+ * covers a left/right modifier pair (see PERIPHERAL_MOD_FLAG_* bit order):
+ *   LCTL/RCTL = 0x11, LSFT/RSFT = 0x22, LALT/RALT = 0x44, LGUI/RGUI = 0x88
+ */
+struct modifier_symbol {
+    uint8_t modifier;
+    const lv_img_dsc_t *symbol_dsc;
+    lv_obj_t *symbol;
+};
 
-/* Single-char glyphs. The mono lv_font_unscii_8 has no ⌘⌥⌃⇧ codepoints,
- * so letters are used for both styles. */
-static char glyph_for(uint8_t bit, bool mac) {
-    static const char win_g[8] = {'C','S','A','W','c','s','a','w'};
-    static const char mac_g[8] = {'C','S','A','W','c','s','a','w'};
-    return (mac ? mac_g : win_g)[bit];
-}
+#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_MODIFIERS_STYLE_MAC)
+static struct modifier_symbol symbols[] = {
+    { .modifier = 0x11, .symbol_dsc = &control_icon },
+    { .modifier = 0x44, .symbol_dsc = &opt_icon },
+    { .modifier = 0x88, .symbol_dsc = &cmd_icon },
+    { .modifier = 0x22, .symbol_dsc = &shift_icon },
+};
+#else
+static struct modifier_symbol symbols[] = {
+    { .modifier = 0x88, .symbol_dsc = &win_icon },
+    { .modifier = 0x44, .symbol_dsc = &alt_icon },
+    { .modifier = 0x11, .symbol_dsc = &control_icon },
+    { .modifier = 0x22, .symbol_dsc = &shift_icon },
+};
+#endif
+
+#define NUM_SYMBOLS (sizeof(symbols) / sizeof(symbols[0]))
+#define ICON_SIZE 14
+#define ICON_GAP 2
 
 int zmk_widget_peripheral_modifiers_init(
     struct zmk_widget_peripheral_modifiers *w, lv_obj_t *p)
 {
-    row = lv_obj_create(p);
-    lv_obj_set_size(row, 64, 12);
+    lv_obj_t *row = lv_obj_create(p);
+    lv_obj_set_size(row, NUM_SYMBOLS * (ICON_SIZE + ICON_GAP), ICON_SIZE + 2);
     lv_obj_set_style_bg_opa(row, LV_OPA_TRANSP, 0);
 
-    bool mac = IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_MODIFIERS_STYLE_MAC);
-
-    for (int i = 0; i < 8; i++) {
-        boxes[i] = lv_label_create(row);
-        char g = glyph_for((uint8_t)i, mac);
-        lv_label_set_text_fmt(boxes[i], "%c", g);
-        lv_obj_align(boxes[i], LV_ALIGN_LEFT_MID, i * 8, 0);
-        lv_obj_set_style_text_opa(boxes[i], LV_OPA_60, 0);
+    for (int i = 0; i < NUM_SYMBOLS; i++) {
+        symbols[i].symbol = lv_img_create(row);
+        lv_obj_align(symbols[i].symbol, LV_ALIGN_TOP_LEFT,
+                     i * (ICON_SIZE + ICON_GAP), 1);
+        lv_img_set_src(symbols[i].symbol, symbols[i].symbol_dsc);
+        lv_obj_set_style_img_opa(symbols[i].symbol, LV_OPA_60, 0);
     }
+
     lv_obj_align(row, LV_ALIGN_BOTTOM_LEFT, 0, 0);
     w->obj = row;
     return 0;
@@ -43,9 +61,9 @@ void zmk_widget_peripheral_modifiers_update(
     struct peripheral_modifiers_state new_state = { .flags = s->modifier_flags };
     if (memcmp(&w->state, &new_state, sizeof(new_state)) == 0) return;
     w->state = new_state;
-    for (int i = 0; i < 8; i++) {
-        bool on = (s->modifier_flags >> i) & 1;
-        lv_obj_set_style_text_opa(boxes[i],
-            on ? LV_OPA_COVER : LV_OPA_60, 0);
+    for (int i = 0; i < NUM_SYMBOLS; i++) {
+        bool on = (s->modifier_flags & symbols[i].modifier) != 0;
+        lv_obj_set_style_img_opa(symbols[i].symbol,
+                                 on ? LV_OPA_COVER : LV_OPA_60, 0);
     }
 }

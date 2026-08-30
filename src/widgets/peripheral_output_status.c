@@ -1,24 +1,25 @@
 #include "peripheral_output_status.h"
+#include "peripheral_icons.h"
 #include <lvgl.h>
 #include <string.h>
 
-static lv_obj_t *usb_label;
-static lv_obj_t *ble_label;
+static lv_obj_t *usb_img;
+static lv_obj_t *ble_img;
 
 int zmk_widget_peripheral_output_status_init(
     struct zmk_widget_peripheral_output_status *w, lv_obj_t *p)
 {
     lv_obj_t *row = lv_obj_create(p);
-    lv_obj_set_size(row, 48, 16);
+    lv_obj_set_size(row, 24, 16);
     lv_obj_set_style_bg_opa(row, LV_OPA_TRANSP, 0);
 
-    usb_label = lv_label_create(row);
-    lv_label_set_text(usb_label, "USB ");
-    lv_obj_align(usb_label, LV_ALIGN_LEFT_MID, 0, 0);
+    usb_img = lv_img_create(row);
+    lv_obj_align(usb_img, LV_ALIGN_LEFT_MID, 0, 0);
+    lv_img_set_src(usb_img, &sym_usb);
 
-    ble_label = lv_label_create(row);
-    lv_label_set_text(ble_label, "BLE");
-    lv_obj_align(ble_label, LV_ALIGN_RIGHT_MID, 0, 0);
+    ble_img = lv_img_create(row);
+    lv_obj_align(ble_img, LV_ALIGN_RIGHT_MID, 0, 0);
+    lv_img_set_src(ble_img, &sym_bt);
 
     lv_obj_align(row, LV_ALIGN_TOP_LEFT, 0, 0);
     w->obj = row;
@@ -37,9 +38,7 @@ void zmk_widget_peripheral_output_status_update(
     };
     if (memcmp(&w->state, &new_state, sizeof(new_state)) == 0) return;
     w->state = new_state;
-    /* Dim the inactive output; keep both visible. */
-    lv_obj_set_style_text_opa(usb_label,
-        usb ? LV_OPA_COVER : LV_OPA_60, 0);
-    lv_obj_set_style_text_opa(ble_label,
-        ble ? LV_OPA_COVER : LV_OPA_60, 0);
+    /* Dim the inactive transport; keep both icons visible. */
+    lv_obj_set_style_img_opa(usb_img, usb ? LV_OPA_COVER : LV_OPA_60, 0);
+    lv_obj_set_style_img_opa(ble_img, ble ? LV_OPA_COVER : LV_OPA_60, 0);
 }

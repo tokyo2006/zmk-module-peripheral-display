@@ -27,6 +27,8 @@ endif()
 if(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGETS)
     # T8
     target_sources(app PRIVATE src/peripheral_display.c)
+    # shared 1-bit bitmap icons (modifiers + output status)
+    target_sources(app PRIVATE src/widgets/peripheral_icons.c)
     # T9 widgets
     target_sources_ifdef(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_LAYER    app PRIVATE src/widgets/peripheral_layer_status.c)
     target_sources_ifdef(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_OUTPUT    app PRIVATE src/widgets/peripheral_output_status.c)
