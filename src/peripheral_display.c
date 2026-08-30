@@ -113,6 +113,7 @@ int peripheral_display_init(lv_obj_t *parent) {
     static lv_style_t style;
     lv_style_init(&style);
     lv_style_set_bg_color(&style, lv_color_black());
+    lv_style_set_bg_opa(&style, LV_OPA_COVER);
     lv_style_set_text_color(&style, lv_color_white());
     lv_obj_add_style(parent, &style, LV_PART_MAIN);
 
