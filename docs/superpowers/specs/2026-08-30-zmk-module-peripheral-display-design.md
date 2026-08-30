@@ -343,27 +343,48 @@ the devicetree binding the user writes, not our C code.
 ### 7.2 Default layout (128×128 mono)
 
 ```
-┌──────────────────────────┐
-│ ▣ BLE  80%  QWERTY       │ ← 顶栏: output + battery + layer name
+┌──────────────────────────┐ y=0
+│ ▣ BLE  ⌫ ⌧                │ ← 输出状态 + HID indicators (CAPS/NUM/SCROLL)
+│               87% ▮       │ ← Central 电量 + 电池图标
+│ ⌃⇧⌥⌘       75% ▮         │ ← Modifier + Peripheral 电量
+│                          │ y=64
+│         (WPM widget)      │ ← WPM（仅 LAYOUT_WPM_FOCUS 启用时显示）
 │                          │
-│       WPM: 42            │ ← 中部: WPM（仅 active 时显示）
-│                          │
-│ ⌃⇧⌥⌘           🔋 78%    │ ← 底部: modifiers + battery
-│                          │
-└──────────────────────────┘
+│ ⌃⇧⌥⌘       HW    [CAT]   │ ← Modifier + 层名 + bongo cat
+└──────────────────────────┘ y=128
 ```
+
+布局参照用户提供的参考图：
+- 左上角（y=0..24）：output status icons + HID indicators (CLCK/NLCK/SLCK)
+- 右上角（y=0..32）：双电池行（central + peripheral）— 用户明确要求两个都显示
+- 左下角（y=96..128）：modifier icons（Windows 风格：WIN/CTRL/ALT/SHIFT/↑/Home）
+- 右下角（y=96..128）：当前 layer 名（"HW"）+ bongo cat 动画
+- 中部（y=48..88）：WPM widget（LAYOUT_DEFAULT 默认隐藏；LAYOUT_WPM_FOCUS 显示大字）
+- 中部留白（LAYOUT_MINIMAL）：什么都不显示，省电
 
 ### 7.3 Widget list
 
 | Widget | Data source | Default |
 |---|---|---|
-| `peripheral_layer_status` | `active_layer` + `layer_name[4]` | enabled |
-| `peripheral_output_status` | `status_flags` USB/BLE bits | enabled |
-| `peripheral_battery_status` | `battery_level` (central) + own battery | enabled |
-| `peripheral_modifiers` | `modifier_flags` | enabled |
-| `peripheral_hid_indicators` | `status_flags` CAPS_WORD bit | enabled |
-| `peripheral_wpm_status` | `wpm_value` | opt-in |
+| `peripheral_layer_status` | `active_layer` + `layer_name[4]` | **enabled** |
+| `peripheral_output_status` | `status_flags` USB/BLE bits | **enabled** |
+| `peripheral_battery_status` | `battery_level` (central) + own battery | **enabled**（双电池强制）|
+| `peripheral_modifiers` | `modifier_flags` | **enabled** |
+| `peripheral_hid_indicators` | `status_flags` CAPS_WORD bit | **enabled** |
+| `peripheral_wpm_status` | `wpm_value` | enabled by `LAYOUT_WPM_FOCUS` |
 | `peripheral_central_name` | `keyboard_id[4]` + stored name | opt-in |
+| **`peripheral_bongo_cat`** | **WPM 推导（key 频率）** | **enabled（默认必带）** |
+
+### 7.3.1 Bongo cat 资源说明
+
+Bongo cat 动画由多帧 PNG-like bitmap 组成（猫 + 爪子，根据按键按下切换）。
+- 来源：从 `englmaxi/zmk-dongle-display` 的 `widgets/bongo_cat_images.c` 获取，
+  **仅引用位图数据**，不复用其 widget 代码
+- 资产授权：Apache-2.0（与 dongle-display 一致），写入 README 致谢
+- 帧数量：2-4 帧（idle / left-paw / right-paw / both-paws）
+- 编码：1-bit mono bitmap，每帧 ~256 bytes，总计 <2 KB
+- 触发：基于 `zmk_activity_state_changed` + WPM 节流，>0 WPM 时切换帧，idle 时归位
+- LVGL 类型：`lv_animimg`（已存在的 LVGL widget，跟 dongle-display 保持一致）
 
 ### 7.4 Fonts
 
@@ -378,8 +399,9 @@ the devicetree binding the user writes, not our C code.
 | Framebuffer (128×128 / 8) | 2 KB |
 | LVGL vdb (100×100/8) | 1.25 KB |
 | Widget object pool | ~8 KB |
+| Bongo cat frames (4 帧 × 256B) | ~1 KB |
 | ZMK + LVGL base stack | ~32 KB |
-| **Total estimate** | **~45 KB** |
+| **Total estimate** | **~46 KB** |
 
 nRF52840 has 256 KB RAM → comfortable headroom.
 nRF52832 (eyelash_nano_v2) has 64 KB RAM → NOT supported.
@@ -542,9 +564,26 @@ config ZMK_PERIPHERAL_DISPLAY_WPM
     bool "Show WPM widget"
     default y
 
+config ZMK_PERIPHERAL_DISPLAY_BONGO_CAT
+    bool "Show bongo cat animation"
+    default y
+    help
+      Animated bongo cat in the bottom-right corner. Reacts to key
+      presses (driven by WPM-derived activity). Disabling frees ~1 KB
+      flash for the bitmap frames. Inspired by zmk-dongle-display.
+
 config ZMK_PERIPHERAL_DISPLAY_CENTRAL_NAME
     bool "Show central keyboard name"
     default n
+
+config ZMK_PERIPHERAL_DISPLAY_MODIFIERS_STYLE
+    int "Modifier icon style"
+    range 0 1
+    default 0
+    help
+      0 = Windows icons (WIN/Ctrl/Alt/Shift)
+      1 = Mac icons (⌘ ⌥ ⌃ ⇧)
+      Matches CONFIG_ZMK_DONGLE_DISPLAY_MAC_MODIFIERS in dongle-display.
 
 # Central-side options
 config ZMK_PERIPHERAL_STATUS_FORWARD
@@ -605,6 +644,9 @@ tests/
    - [ ] Modifier hold: icon switches immediately
    - [ ] USB unplug: output status icon changes
    - [ ] WPM digit updates continuously
+   - [ ] Bongo cat paws move when typing (compare with WPM >0 vs idle)
+   - [ ] Central battery + peripheral battery both render with correct %
+   - [ ] HID indicators (CLCK/NLCK/SLCK) toggle on caps/num/scroll lock
    - [ ] Disconnect central: peripheral shows "NO CENTRAL" within 2s
    - [ ] 1h soak: no memory leak (shadow size constant)
 
@@ -627,6 +669,7 @@ tests/
 | R11 | Code pollution from prospector fork | L | Maintenance | Independent repo, zero code reuse |
 | R12 | Users expect touch on mono display | L | Disappointment | README explicitly states no input |
 | R13 | Build env claims cannot be verified | M | False success | Author explicitly does not claim pass; CI delegated |
+| R15 | Bongo cat bitmap asset license unclear | L | License issue | Use only Apache-2.0 bits from englmaxi/zmk-dongle-display; attribution in README; user can disable via Kconfig |
 | R14 | Hardware test cannot be automated | M | Late bug discovery | Manual script in README; checklist |
 
 ---
