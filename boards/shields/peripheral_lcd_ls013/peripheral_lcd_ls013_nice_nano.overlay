@@ -9,13 +9,13 @@
  * Users must uncomment + customize for their hardware.
  */
 
+/*
 / {
     chosen {
         zephyr,display = &ls013;
     };
 };
 
-/*
 &spi0 {
     status = "okay";
     cs-gpios = <&gpio0 7 GPIO_ACTIVE_LOW>;  // D7 on nice_nano

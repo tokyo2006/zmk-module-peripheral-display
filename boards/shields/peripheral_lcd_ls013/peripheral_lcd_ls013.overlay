@@ -10,13 +10,13 @@
  * This avoids GPIO conflicts with users' keyboard shields.
  */
 
+/*
 / {
     chosen {
         zephyr,display = &ls013;
     };
 };
 
-/*
 &spi1 {  // change to &spi0, &spi2, etc. depending on board
     status = "okay";
     pinctrl-0 = <&spi1_default>;
