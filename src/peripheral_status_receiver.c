@@ -8,7 +8,6 @@
  * subscribes to notifications, then unpacks each 26-byte payload into the
  * shadow state.
  */
-#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_STATUS_RECEIVE)
 
 #include <errno.h>
 #include <string.h>
@@ -21,6 +20,8 @@
 #include <zephyr/sys/util.h>
 
 #include <zmk/peripheral_status.h>
+
+#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_STATUS_RECEIVE)
 
 LOG_MODULE_DECLARE(peripheral_status, CONFIG_ZMK_LOG_LEVEL);
 

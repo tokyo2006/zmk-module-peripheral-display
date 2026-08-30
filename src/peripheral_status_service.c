@@ -29,7 +29,7 @@ BT_GATT_SERVICE_DEFINE(peripheral_status_svc,
                            BT_GATT_CHRC_NOTIFY,
                            BT_GATT_PERM_NONE,
                            NULL, NULL, notify_buf),
-    BT_GATT_CCC(NULL, nfy_changed_cb),
+    BT_GATT_CCC(nfy_changed_cb, BT_GATT_PERM_READ | BT_GATT_PERM_WRITE),
 );
 
 int peripheral_status_notify(const uint8_t *buf, size_t len)

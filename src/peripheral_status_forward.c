@@ -6,7 +6,6 @@
  * current state and notify the peripheral via the GATT characteristic
  * defined in peripheral_status_service.c.
  */
-#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_STATUS_FORWARD)
 
 #include <string.h>
 #include <zephyr/kernel.h>
@@ -37,6 +36,8 @@
 #include <zmk/events/hid_indicators_changed.h>
 #include <zmk/events/activity_state_changed.h>
 #include <zmk/events/endpoint_changed.h>
+
+#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_STATUS_FORWARD)
 
 extern int peripheral_status_notify(const uint8_t *buf, size_t len);
 
