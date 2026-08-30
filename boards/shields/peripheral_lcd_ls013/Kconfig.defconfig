@@ -33,4 +33,12 @@ config LV_DPI_DEF
 config LV_Z_BITS_PER_PIXEL
     default 1
 
+# Force a full framebuffer flush every frame. Without it LVGL uses
+# partial (dirty-rect) updates, which leave the Sharp memory LCD with
+# regions stuck in different VCOM states (some black, some white, some
+# gray). Idle cost is low: the bongo-cat idle animation only ticks every
+# 10 s, so the panel redraws roughly once per 10 s at rest.
+config LV_Z_FULL_REFRESH
+    default y
+
 endif
