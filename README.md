@@ -91,14 +91,55 @@ GPIO conflicts with your keyboard matrix. Uncomment + customize:
 > the other way up, remove the `rotate-180;` line — otherwise the image
 > will render upside down.
 
-### 4. Configure Kconfig (optional)
+### 4. Configure Kconfig (required on both halves)
+
+The display renders on the **peripheral** half, but the status it shows
+is produced on the **central** half. Each half needs a couple of flags —
+these are the most commonly missed bits.
+
+#### Peripheral (the half carrying `peripheral_lcd_ls013`)
+
+The shield's own `peripheral_lcd_ls013.conf` already turns on
+`CONFIG_ZMK_DISPLAY`, `CONFIG_ZMK_PERIPHERAL_DISPLAY`, the receiver and
+the widgets. You only need to add **one** flag yourself:
 
 ```conf
-# your config/<board>.conf
-CONFIG_ZMK_PERIPHERAL_DISPLAY=y
+# config/<peripheral_kb>.conf
+CONFIG_BT_GATT_CLIENT=y
+```
+
+The peripheral subscribes to the central's status characteristic over
+GATT, so it must be built with the GATT *client* role — without it,
+`bt_gatt_discover` / `bt_gatt_subscribe` are undefined at link time.
+
+#### Central (the half connected to the PC)
+
+The central packs its state and notifies the peripheral. It needs the
+module gate plus the two subsystems the forward code reads:
+
+```conf
+# config/<central_kb>.conf
+CONFIG_ZMK_PERIPHERAL_DISPLAY=y   # enables status forwarding
+CONFIG_ZMK_WPM=y                  # forward code calls zmk_wpm_get_state()
+CONFIG_ZMK_HID_INDICATORS=y       # forward code listens to zmk_hid_indicators_changed
+```
+
+> The central does **not** need a display of its own. Enabling
+> `CONFIG_ZMK_PERIPHERAL_DISPLAY` on the central only turns on the
+> `ZMK_PERIPHERAL_STATUS_FORWARD` path — it does not pull in `ZMK_DISPLAY`
+> or LVGL (those are enabled on the peripheral by the shield's conf +
+> `Kconfig.defconfig`).
+
+#### Optional widget toggles
+
+```conf
+# config/<peripheral_kb>.conf
 CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_BONGO_CAT=y
 CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_WPM=n
+CONFIG_ZMK_PERIPHERAL_DISPLAY_MODIFIERS_STYLE_MAC=y   # Mac modifier icons
 ```
+
+See `Kconfig` for the full list of widget toggles.
 
 ## Display driver
 
