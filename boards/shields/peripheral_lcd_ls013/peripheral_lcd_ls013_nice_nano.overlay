@@ -1,0 +1,33 @@
+/*
+ * Reference overlay for nice_nano board.
+ * nice!nano SPI is typically on D4/D5/D6/D7/D8 mapped to nRF52840 pins:
+ *   D4 = P0.04 (SCK), D5 = P0.05 (unused), D6 = P0.06 (unused),
+ *   D7 = P0.07 (CS), D8 = P0.08 (MOSI).
+ * Use one of the Pro Micro free pins (D0/D1/D2/D3) for CS and DISP_EN.
+ *
+ * ALL DISPLAY WIRING IS COMMENTED OUT BY DESIGN.
+ * Users must uncomment + customize for their hardware.
+ */
+
+/ {
+    chosen {
+        zephyr,display = &ls013;
+    };
+};
+
+/*
+&spi0 {
+    status = "okay";
+    cs-gpios = <&gpio0 7 GPIO_ACTIVE_LOW>;  // D7 on nice_nano
+    ls013: ls013b7dh03@0 {
+        compatible = "sharp,ls0xx";
+        reg = <0>;
+        spi-max-frequency = <2000000>;
+        width = <128>;
+        height = <128>;
+        serial-vcom-inversion;
+        // disp-en-gpios = <&gpio0 3 GPIO_ACTIVE_HIGH>;  // D3
+        // extcomin-gpios = <&gpio0 2 GPIO_ACTIVE_HIGH>; // D2
+    };
+};
+*/

@@ -1,0 +1,37 @@
+/*
+ * Reference overlay for peripheral_lcd_ls013.
+ *
+ * ALL DISPLAY WIRING IS COMMENTED OUT BY DESIGN.
+ * Users must:
+ *   1. Pick free GPIO pins on their board (no clash with kscan matrix).
+ *   2. Uncomment the relevant blocks below.
+ *   3. Adjust pin numbers and SPI instance to match their hardware.
+ *
+ * This avoids GPIO conflicts with users' keyboard shields.
+ */
+
+/ {
+    chosen {
+        zephyr,display = &ls013;
+    };
+};
+
+/*
+&spi1 {  // change to &spi0, &spi2, etc. depending on board
+    status = "okay";
+    pinctrl-0 = <&spi1_default>;
+    pinctrl-names = "default";
+    cs-gpios = <&gpio0 9 GPIO_ACTIVE_LOW>;  // <-- user changes this
+    ls013: ls013b7dh03@0 {
+        compatible = "sharp,ls0xx";  // or "sharp,ls0xx-vcom" if using third-party driver
+        reg = <0>;
+        spi-max-frequency = <2000000>;
+        width = <128>;
+        height = <128>;
+        serial-vcom-inversion;
+        // Optional:
+        // disp-en-gpios = <&gpio0 30 GPIO_ACTIVE_HIGH>;
+        // extcomin-gpios = <&gpio0 29 GPIO_ACTIVE_HIGH>;
+    };
+};
+*/
