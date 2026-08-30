@@ -28,6 +28,9 @@
 #if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_CENTRAL_NAME)
 #include "widgets/peripheral_central_name.h"
 #endif
+#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_BONGO_CAT)
+#include "widgets/peripheral_bongo_cat.h"
+#endif
 
 LOG_MODULE_REGISTER(peripheral_display, CONFIG_ZMK_LOG_LEVEL);
 
@@ -66,6 +69,11 @@ extern int zmk_widget_peripheral_central_name_init(
     struct zmk_widget_peripheral_central_name *w, lv_obj_t *p);
 static struct zmk_widget_peripheral_central_name central_name_w;
 #endif
+#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_BONGO_CAT)
+extern int zmk_widget_peripheral_bongo_cat_init(
+    struct zmk_widget_peripheral_bongo_cat *w, lv_obj_t *p);
+static struct zmk_widget_peripheral_bongo_cat bongo_cat_w;
+#endif
 
 #define POLL_MS 100
 
@@ -94,6 +102,9 @@ static void poll_shadow(lv_timer_t *t) {
 #endif
 #if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_CENTRAL_NAME)
     zmk_widget_peripheral_central_name_update(&central_name_w, &s.data);
+#endif
+#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_BONGO_CAT)
+    zmk_widget_peripheral_bongo_cat_update(&bongo_cat_w, &s.data);
 #endif
 }
 
@@ -126,6 +137,9 @@ int peripheral_display_init(lv_obj_t *parent) {
 #endif
 #if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_CENTRAL_NAME)
     zmk_widget_peripheral_central_name_init(&central_name_w, parent);
+#endif
+#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_BONGO_CAT)
+    zmk_widget_peripheral_bongo_cat_init(&bongo_cat_w, parent);
 #endif
 
     lv_timer_create(poll_shadow, POLL_MS, NULL);
