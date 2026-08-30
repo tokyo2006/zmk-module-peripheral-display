@@ -200,7 +200,7 @@ ZMK_SUBSCRIPTION(peripheral_status_activity, zmk_activity_state_changed);
 
 /* Central -> peripheral relay definition: ships every peripheral_status_update
  * event to the peripheral half using the standard split relay transport. */
-ZMK_RELAY_EVENT_CENTRAL_TO_PERIPHERAL(peripheral_status_update, "pd", )
+ZMK_RELAY_EVENT_CENTRAL_TO_PERIPHERAL(peripheral_status_update, pd, )
 
 static int peripheral_status_forward_init(const struct device *device) {
     ARG_UNUSED(device);

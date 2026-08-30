@@ -23,7 +23,7 @@ LOG_MODULE_DECLARE(peripheral_status, CONFIG_ZMK_LOG_LEVEL);
 /* Receive the relayed `peripheral_status_update` event from the central.
  * On arrival the macro re-raises a `peripheral_status_update` event, which
  * our listener below consumes to refresh the shadow state. */
-ZMK_RELAY_EVENT_HANDLE(peripheral_status_update, "pd", )
+ZMK_RELAY_EVENT_HANDLE(peripheral_status_update, pd, )
 
 static int on_status_update(const zmk_event_t *eh) {
     const struct peripheral_status_update *ev =
