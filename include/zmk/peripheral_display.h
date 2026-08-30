@@ -38,7 +38,7 @@ int peripheral_display_init(lv_obj_t *parent);
         lv_obj_t *obj;                                                       \
         sys_snode_t node;                                                    \
         state_t state;                                                       \
-    }
+    };
 
 #ifdef __cplusplus
 }
