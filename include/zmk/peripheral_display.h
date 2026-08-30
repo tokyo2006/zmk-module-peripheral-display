@@ -36,7 +36,7 @@ int peripheral_display_init(lv_obj_t *parent);
 #define ZMK_PERIPHERAL_DISPLAY_WIDGET(name, state_t)                         \
     struct zmk_widget_peripheral_##name {                                    \
         lv_obj_t *obj;                                                       \
-        sys_slist_node_t node;                                               \
+        sys_snode_t node;                                                    \
         state_t state;                                                       \
     }
 
