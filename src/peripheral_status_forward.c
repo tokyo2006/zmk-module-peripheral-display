@@ -109,6 +109,9 @@ static void fill_current_state(struct peripheral_status_adv_data *s) {
 static void raise_status(void) {
     struct peripheral_status_update ev = {0};
     fill_current_state(&ev.data);
+    LOG_INF("peripheral-display: raise batt=%u layer=%u flags=0x%02x",
+            (unsigned)ev.data.battery_level, (unsigned)ev.data.active_layer,
+            (unsigned)ev.data.status_flags);
     int err = raise_peripheral_status_update(ev);
     if (err) {
         LOG_WRN("peripheral-display: raise failed err=%d batt=%u layer=%u", err,

@@ -34,8 +34,9 @@ static int on_status_update(const zmk_event_t *eh) {
     if (peripheral_status_shadow_set(&ev->data) != 0) {
         LOG_WRN("peripheral-display: shadow set failed");
     } else {
-        LOG_DBG("peripheral-display: shadow updated batt=%u layer=%u",
-                (unsigned)ev->data.battery_level, (unsigned)ev->data.active_layer);
+        LOG_INF("peripheral-display: recv batt=%u layer=%u flags=0x%02x",
+                (unsigned)ev->data.battery_level, (unsigned)ev->data.active_layer,
+                (unsigned)ev->data.status_flags);
     }
     return ZMK_EV_EVENT_HANDLED;
 }
