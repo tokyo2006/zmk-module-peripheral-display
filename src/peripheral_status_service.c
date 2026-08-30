@@ -37,5 +37,11 @@ int peripheral_status_notify(const uint8_t *buf, size_t len)
     if (len != PERIPHERAL_STATUS_PAYLOAD_SIZE) {
         return -EINVAL;
     }
-    return bt_gatt_notify(NULL, &peripheral_status_svc.attrs[1], buf, len);
+    /* attrs[] layout from BT_GATT_SERVICE_DEFINE above:
+     *   attrs[0] = primary service
+     *   attrs[1] = characteristic declaration  (BT_UUID_GATT_CHRC)
+     *   attrs[2] = characteristic VALUE        (the one to notify on)
+     *   attrs[3] = CCC descriptor
+     */
+    return bt_gatt_notify(NULL, &peripheral_status_svc.attrs[2], buf, len);
 }
