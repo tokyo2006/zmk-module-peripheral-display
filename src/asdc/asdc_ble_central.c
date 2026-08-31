@@ -46,6 +46,15 @@ static void asdc_l2cap_disconnected(struct bt_l2cap_chan *chan) {
     char addr[BT_ADDR_LE_STR_LEN];
     bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
     LOG_WRN("asdc L2CAP disconnected: %s", addr);
+
+    /* Clear the channel conn so a later send() doesn't keep pushing into a
+     * dead channel, and so a reconnect can establish a fresh one. */
+    for (int i = 0; i < CONFIG_ZMK_SPLIT_BLE_CENTRAL_PERIPHERALS; i++) {
+        if (peripheral_slots[i].conn == conn) {
+            peripheral_slots[i].chan.chan.conn = NULL;
+            break;
+        }
+    }
 }
 
 static struct bt_l2cap_chan_ops asdc_l2cap_ops = {
@@ -104,6 +113,7 @@ static void on_disconnected(struct bt_conn *conn, uint8_t reason)
     for (int i = 0; i < CONFIG_ZMK_SPLIT_BLE_CENTRAL_PERIPHERALS; i++) {
         if (peripheral_slots[i].conn == conn) {
             peripheral_slots[i].conn = NULL;
+            peripheral_slots[i].chan.chan.conn = NULL;
             break;
         }
     }
