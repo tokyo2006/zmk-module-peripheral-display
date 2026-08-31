@@ -57,10 +57,14 @@ static void asdc_l2cap_connected(struct bt_l2cap_chan *chan) {
 
 static void asdc_l2cap_disconnected(struct bt_l2cap_chan *chan) {
     struct bt_conn *conn = chan->conn;
-    
+
     char addr[BT_ADDR_LE_STR_LEN];
-    bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-    LOG_DBG("Peripheral L2CAP channel disconnected: %s", addr);
+    bt_addr_le_str(bt_conn_get_dst(conn), addr, sizeof(addr));
+    LOG_WRN("Peripheral L2CAP channel disconnected: %s", addr);
+
+    /* Clear the cached conn so the next accept() call from the central
+     * after a BLE reconnect can reuse this channel. */
+    asdc_l2cap_chan.chan.conn = NULL;
 }
 
 static int asdc_l2cap_accept(struct bt_conn *conn, struct bt_l2cap_server *server,
