@@ -144,11 +144,6 @@ int asdc_transport_init(const struct device *dev) {
     for (uint8_t i = 0; i < CONFIG_ZMK_SPLIT_BLE_CENTRAL_PERIPHERALS; i++) {
         peripheral_slots[i].chan.chan.ops = &asdc_l2cap_ops;
         peripheral_slots[i].chan.rx.mtu = CONFIG_BT_L2CAP_TX_MTU;
-        /* Front-load credits: the peripheral is receive-only, so it never
-         * replenishes them through its own sends. Without this, the central
-         * blocks in bt_l2cap_chan_send() after ~initial_credits heartbeats
-         * and the screen freezes waiting for credit. */
-        peripheral_slots[i].chan.initial_credits = 30;
     }
     return 0;
 }
@@ -185,9 +180,15 @@ void asdc_transport_send_data(const struct device *dev, const uint8_t *data, siz
             k_msleep(100);
         }
 
-        struct net_buf *buf = net_buf_alloc(&asdc_central_tx_pool, K_SECONDS(2));
+        /* Non-blocking: this runs on the system workqueue (via
+         * k_work_schedule). If the link is stalled (e.g. peer stopped
+         * granting credits), the TX pool can stay exhausted for a while;
+         * blocking here would stall every other consumer of the system
+         * workqueue for the same duration. Drop this send and let the next
+         * heartbeat/event retry instead. */
+        struct net_buf *buf = net_buf_alloc(&asdc_central_tx_pool, K_NO_WAIT);
         if (!buf) {
-            LOG_ERR("Failed to allocate net_buf for L2CAP send");
+            LOG_WRN("asdc TX pool exhausted, dropping send (link stalled?)");
             return;
         }
 
