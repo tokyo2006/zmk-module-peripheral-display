@@ -216,8 +216,13 @@ int peripheral_display_init(lv_obj_t *parent) {
     dbg_label = lv_label_create(parent);
     lv_label_set_text(dbg_label, "---");
     lv_obj_set_style_text_font(dbg_label, &lv_font_unscii_8, 0);
-    /* Bottom-left, out of the way of the bongo cat / WPM (bottom-right). */
+#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_MODIFIERS)
+    /* Sit directly above the modifier icon row (also bottom-left) so the
+     * two don't draw on top of each other. */
+    lv_obj_align_to(dbg_label, modifiers_w.obj, LV_ALIGN_OUT_TOP_LEFT, 0, 0);
+#else
     lv_obj_align(dbg_label, LV_ALIGN_BOTTOM_LEFT, 0, -2);
+#endif
 #endif
     /* Visible initially: shows "NO LINK" until the first status arrives. */
     had_link = false;
