@@ -17,6 +17,7 @@
 
 #include <zmk/peripheral_status.h>
 #include <zmk/asdc.h>
+#include "peripheral_status_forward_debounce.h"
 
 LOG_MODULE_DECLARE(peripheral_status, CONFIG_ZMK_LOG_LEVEL);
 
@@ -106,7 +107,16 @@ static void fill_current_state(struct peripheral_status_adv_data *s) {
     s->wpm_value = (uint8_t)wpm;
 }
 
-static void raise_status(void) {
+static struct peripheral_debounce_state debounce = {0};
+
+static void raise_status(enum peripheral_debounce_key key, bool force) {
+    /* Debounce per event type (battery 30 s, wpm 200 ms, others immediate)
+     * so a burst of events doesn't spam the ASDC queue. The heartbeat forces
+     * a send regardless. */
+    if (!peripheral_status_should_fire(&debounce, key, k_uptime_get_32(), force)) {
+        return;
+    }
+
     struct peripheral_status_adv_data s;
     fill_current_state(&s);
 
@@ -116,9 +126,11 @@ static void raise_status(void) {
         return;
     }
 
-    LOG_INF("peripheral-display: send batt=%u layer=%u flags=0x%02x",
+    LOG_INF("peripheral-display: send batt=%u layer=%u flags=0x%02x "
+            "mods=0x%02x wpm=%u",
             (unsigned)s.battery_level, (unsigned)s.active_layer,
-            (unsigned)s.status_flags);
+            (unsigned)s.status_flags, (unsigned)s.modifier_flags,
+            (unsigned)s.wpm_value);
 
     int err = asdc_send(dev, (const uint8_t *)&s, sizeof(s), 0);
     if (err < 0) {
@@ -130,7 +142,7 @@ static void raise_status(void) {
 
 static void heartbeat_work_handler(struct k_work *work) {
     ARG_UNUSED(work);
-    raise_status();
+    raise_status(KEY_ACTIVITY, true);
 }
 
 K_WORK_DEFINE(heartbeat_work, heartbeat_work_handler);
@@ -146,7 +158,7 @@ K_TIMER_DEFINE(heartbeat_timer, heartbeat_timer_handler, NULL);
 
 static int on_layer_changed(const zmk_event_t *eh) {
     ARG_UNUSED(eh);
-    raise_status();
+    raise_status(KEY_LAYER, false);
     return ZMK_EV_EVENT_BUBBLE;
 }
 ZMK_LISTENER(peripheral_status_layer, on_layer_changed);
@@ -154,7 +166,7 @@ ZMK_SUBSCRIPTION(peripheral_status_layer, zmk_layer_state_changed);
 
 static int on_mods_changed(const zmk_event_t *eh) {
     ARG_UNUSED(eh);
-    raise_status();
+    raise_status(KEY_MODS, false);
     return ZMK_EV_EVENT_BUBBLE;
 }
 ZMK_LISTENER(peripheral_status_mods, on_mods_changed);
@@ -162,7 +174,7 @@ ZMK_SUBSCRIPTION(peripheral_status_mods, zmk_modifiers_state_changed);
 
 static int on_battery_changed(const zmk_event_t *eh) {
     ARG_UNUSED(eh);
-    raise_status();
+    raise_status(KEY_BATTERY, false);
     return ZMK_EV_EVENT_BUBBLE;
 }
 ZMK_LISTENER(peripheral_status_battery, on_battery_changed);
@@ -170,7 +182,7 @@ ZMK_SUBSCRIPTION(peripheral_status_battery, zmk_battery_state_changed);
 
 static int on_wpm_changed(const zmk_event_t *eh) {
     ARG_UNUSED(eh);
-    raise_status();
+    raise_status(KEY_WPM, false);
     return ZMK_EV_EVENT_BUBBLE;
 }
 ZMK_LISTENER(peripheral_status_wpm, on_wpm_changed);
@@ -178,7 +190,7 @@ ZMK_SUBSCRIPTION(peripheral_status_wpm, zmk_wpm_state_changed);
 
 static int on_output_changed(const zmk_event_t *eh) {
     ARG_UNUSED(eh);
-    raise_status();
+    raise_status(KEY_OUTPUT, false);
     return ZMK_EV_EVENT_BUBBLE;
 }
 ZMK_LISTENER(peripheral_status_output, on_output_changed);
@@ -186,7 +198,7 @@ ZMK_SUBSCRIPTION(peripheral_status_output, zmk_usb_conn_state_changed);
 
 static int on_endpoint_changed(const zmk_event_t *eh) {
     ARG_UNUSED(eh);
-    raise_status();
+    raise_status(KEY_ENDPOINT, false);
     return ZMK_EV_EVENT_BUBBLE;
 }
 ZMK_LISTENER(peripheral_status_endpoint, on_endpoint_changed);
@@ -194,7 +206,7 @@ ZMK_SUBSCRIPTION(peripheral_status_endpoint, zmk_endpoint_changed);
 
 static int on_hid_changed(const zmk_event_t *eh) {
     ARG_UNUSED(eh);
-    raise_status();
+    raise_status(KEY_HID, false);
     return ZMK_EV_EVENT_BUBBLE;
 }
 ZMK_LISTENER(peripheral_status_hid, on_hid_changed);
@@ -202,7 +214,7 @@ ZMK_SUBSCRIPTION(peripheral_status_hid, zmk_hid_indicators_changed);
 
 static int on_activity_changed(const zmk_event_t *eh) {
     ARG_UNUSED(eh);
-    raise_status();
+    raise_status(KEY_ACTIVITY, false);
     return ZMK_EV_EVENT_BUBBLE;
 }
 ZMK_LISTENER(peripheral_status_activity, on_activity_changed);

@@ -23,8 +23,9 @@ if(CONFIG_ZMK_PERIPHERAL_DISPLAY)
 endif()
 
 if(CONFIG_ZMK_PERIPHERAL_STATUS_FORWARD)
-    # central: subscribe ZMK events -> raise status event -> relay to peripheral
+    # central: subscribe ZMK events -> send status over ASDC
     target_sources(app PRIVATE src/peripheral_status_forward.c)
+    target_sources(app PRIVATE src/peripheral_status_forward_debounce.c)
 endif()
 
 if(CONFIG_ZMK_PERIPHERAL_STATUS_RECEIVE)

@@ -34,7 +34,6 @@ int peripheral_status_unpack(const uint8_t *buf, size_t buf_len,
 
 static struct peripheral_status_shadow shadow;
 static struct k_mutex shadow_mutex = Z_MUTEX_INITIALIZER(shadow_mutex);
-static bool shadow_initialized;
 
 bool peripheral_status_shadow_get(struct peripheral_status_shadow *out)
 {
@@ -42,6 +41,12 @@ bool peripheral_status_shadow_get(struct peripheral_status_shadow *out)
     k_mutex_lock(&shadow_mutex, K_FOREVER);
     *out = shadow;
     bool ok = shadow.valid;
+    /* Expire if the last update is older than 3x the 1 Hz heartbeat so the
+     * display doesn't keep showing stale data forever after the central
+     * disconnects. */
+    if (ok && (k_uptime_get_32() - shadow.last_update_ms) > 3000) {
+        ok = false;
+    }
     k_mutex_unlock(&shadow_mutex);
     return ok;
 }

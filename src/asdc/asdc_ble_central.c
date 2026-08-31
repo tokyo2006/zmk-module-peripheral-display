@@ -73,6 +73,13 @@ static void on_connected(struct bt_conn *conn, uint8_t err)
 		return;
 	}
 
+    /* Only track connections where we are the BLE central (i.e. to split
+     * peripherals). Ignore host-side connections so they don't consume a
+     * peripheral slot. */
+    struct bt_conn_info info;
+    if (bt_conn_get_info(conn, &info) < 0) return;
+    if (info.role != BT_CONN_ROLE_CENTRAL) return;
+
 	char addr[BT_ADDR_LE_STR_LEN];
 	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
     LOG_INF("asdc connection callback: %s", addr);
@@ -105,9 +112,14 @@ static void on_connected(struct bt_conn *conn, uint8_t err)
 
 static void on_disconnected(struct bt_conn *conn, uint8_t reason)
 {
+    /* Only act on connections we tracked (central -> split peripheral). */
+    struct bt_conn_info info;
+    if (bt_conn_get_info(conn, &info) < 0) return;
+    if (info.role != BT_CONN_ROLE_CENTRAL) return;
+
 	char addr[BT_ADDR_LE_STR_LEN];
 	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-	LOG_DBG("asdc disconnection callback: %s", addr);
+	LOG_WRN("asdc disconnection callback: %s", addr);
 
     // Remove the connection from the peripherals array
     for (int i = 0; i < CONFIG_ZMK_SPLIT_BLE_CENTRAL_PERIPHERALS; i++) {
