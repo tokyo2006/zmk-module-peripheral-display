@@ -141,10 +141,14 @@ BT_CONN_CB_DEFINE(asdc_conn_callbacks) = {
 //
 
 int asdc_transport_init(const struct device *dev) {
-
     for (uint8_t i = 0; i < CONFIG_ZMK_SPLIT_BLE_CENTRAL_PERIPHERALS; i++) {
         peripheral_slots[i].chan.chan.ops = &asdc_l2cap_ops;
         peripheral_slots[i].chan.rx.mtu = CONFIG_BT_L2CAP_TX_MTU;
+        /* Front-load credits: the peripheral is receive-only, so it never
+         * replenishes them through its own sends. Without this, the central
+         * blocks in bt_l2cap_chan_send() after ~initial_credits heartbeats
+         * and the screen freezes waiting for credit. */
+        peripheral_slots[i].chan.initial_credits = 30;
     }
     return 0;
 }
