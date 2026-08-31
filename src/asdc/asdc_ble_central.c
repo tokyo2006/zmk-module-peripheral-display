@@ -36,7 +36,7 @@ static void asdc_l2cap_connected(struct bt_l2cap_chan *chan) {
     char addr[BT_ADDR_LE_STR_LEN];
     bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
     
-    LOG_DBG("L2CAP channel connected: %s, TX MTU %d, RX MTU %d", 
+    LOG_INF("asdc L2CAP connected: %s, TX MTU %d, RX MTU %d", 
             addr, le_chan->tx.mtu, le_chan->rx.mtu);
 }
 
@@ -45,7 +45,7 @@ static void asdc_l2cap_disconnected(struct bt_l2cap_chan *chan) {
     
     char addr[BT_ADDR_LE_STR_LEN];
     bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-    LOG_DBG("L2CAP channel disconnected: %s", addr);
+    LOG_WRN("asdc L2CAP disconnected: %s", addr);
 }
 
 static struct bt_l2cap_chan_ops asdc_l2cap_ops = {
@@ -66,7 +66,7 @@ static void on_connected(struct bt_conn *conn, uint8_t err)
 
 	char addr[BT_ADDR_LE_STR_LEN];
 	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-    LOG_DBG("asdc connection callback: %s", addr);
+    LOG_INF("asdc connection callback: %s", addr);
 
     // Store the connection in the peripherals array
     uint8_t i;
@@ -86,7 +86,7 @@ static void on_connected(struct bt_conn *conn, uint8_t err)
     
     // Connect L2CAP channel
     struct bt_l2cap_le_chan *le_chan = &peripheral_slots[i].chan;
-    LOG_DBG("Connecting L2CAP channel to PSM 0x%04x", CONFIG_ZMK_BT_ASDC_L2CAP_PSM);
+    LOG_INF("asdc L2CAP connecting to PSM 0x%04x", CONFIG_ZMK_BT_ASDC_L2CAP_PSM);
     int l2cap_err = bt_l2cap_chan_connect(conn, &le_chan->chan, CONFIG_ZMK_BT_ASDC_L2CAP_PSM);
     if (l2cap_err) {
         LOG_ERR("Failed to connect L2CAP channel (err %d)", l2cap_err);

@@ -51,7 +51,7 @@ static void asdc_l2cap_connected(struct bt_l2cap_chan *chan) {
     char addr[BT_ADDR_LE_STR_LEN];
     bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
     
-    LOG_DBG("Peripheral L2CAP channel connected: %s, TX MTU %d, RX MTU %d", 
+    LOG_INF("asdc peripheral L2CAP connected: %s, TX MTU %d, RX MTU %d", 
             addr, le_chan->tx.mtu, le_chan->rx.mtu);
 }
 
@@ -67,7 +67,7 @@ static int asdc_l2cap_accept(struct bt_conn *conn, struct bt_l2cap_server *serve
                               struct bt_l2cap_chan **chan) {
     char addr[BT_ADDR_LE_STR_LEN];
     bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-    LOG_DBG("L2CAP accept from %s", addr);
+    LOG_INF("asdc L2CAP accept from %s", addr);
 
     if (asdc_l2cap_chan.chan.conn) {
         LOG_WRN("L2CAP channel already active, rejecting new connection");
