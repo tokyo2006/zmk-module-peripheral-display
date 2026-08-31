@@ -193,9 +193,11 @@ int peripheral_display_init(lv_obj_t *parent) {
     no_link_label = lv_label_create(parent);
     lv_label_set_text(no_link_label, "NO LINK");
     lv_obj_set_style_text_font(no_link_label, &lv_font_unscii_8, 0);
-    lv_obj_align(no_link_label, LV_ALIGN_CENTER, 0, 0);
+    /* Offset above the center layer label so the two don't overlap. */
+    lv_obj_align(no_link_label, LV_ALIGN_CENTER, 0, -24);
     /* Visible initially: shows "NO LINK" until the first status arrives. */
     had_link = false;
+    set_link_visible(false);
 
     lv_timer_create(poll_shadow, POLL_MS, NULL);
     return 0;
