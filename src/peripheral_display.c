@@ -77,10 +77,40 @@ static struct zmk_widget_peripheral_bongo_cat bongo_cat_w;
 
 #define POLL_MS 100
 
+static lv_obj_t *no_link_label;
+static bool had_link;
+
+static void set_link_visible(bool linked) {
+    if (linked) {
+        lv_obj_add_flag(no_link_label, LV_OBJ_FLAG_HIDDEN);
+#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_BONGO_CAT)
+        lv_obj_clear_flag(bongo_cat_w.obj, LV_OBJ_FLAG_HIDDEN);
+#endif
+    } else {
+        lv_obj_clear_flag(no_link_label, LV_OBJ_FLAG_HIDDEN);
+#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_BONGO_CAT)
+        lv_obj_add_flag(bongo_cat_w.obj, LV_OBJ_FLAG_HIDDEN);
+#endif
+    }
+}
+
 static void poll_shadow(lv_timer_t *t) {
     (void)t;
     struct peripheral_status_shadow s;
-    if (!peripheral_status_shadow_get(&s)) return;
+    bool ok = peripheral_status_shadow_get(&s);
+
+    if (!ok) {
+        if (had_link) {
+            had_link = false;
+            set_link_visible(false);
+        }
+        return;
+    }
+
+    if (!had_link) {
+        had_link = true;
+        set_link_visible(true);
+    }
 
 #if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_LAYER)
     zmk_widget_peripheral_layer_status_update(&layer_w, &s.data);
@@ -159,6 +189,13 @@ int peripheral_display_init(lv_obj_t *parent) {
     zmk_widget_peripheral_wpm_status_init(&wpm_w, parent);
     lv_obj_align_to(wpm_w.obj, bongo_cat_w.obj, LV_ALIGN_BOTTOM_RIGHT, 0, 5);
 #endif
+
+    no_link_label = lv_label_create(parent);
+    lv_label_set_text(no_link_label, "NO LINK");
+    lv_obj_set_style_text_font(no_link_label, &lv_font_unscii_8, 0);
+    lv_obj_align(no_link_label, LV_ALIGN_CENTER, 0, 0);
+    /* Visible initially: shows "NO LINK" until the first status arrives. */
+    had_link = false;
 
     lv_timer_create(poll_shadow, POLL_MS, NULL);
     return 0;
