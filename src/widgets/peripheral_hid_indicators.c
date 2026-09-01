@@ -18,8 +18,9 @@ int zmk_widget_peripheral_hid_indicators_init(
         lv_obj_align(labels[i], LV_ALIGN_LEFT_MID, i * 16, 0);
         lv_obj_set_style_text_opa(labels[i], LV_OPA_60, 0);
     }
-    /* Top-left, just to the right of output_status widget. */
-    lv_obj_align(row, LV_ALIGN_TOP_LEFT, 48, 0);
+    /* Top-left, below the output_status row (to its right would overlap
+     * the battery widget, which claims the top-right x:64-128 region). */
+    lv_obj_align(row, LV_ALIGN_TOP_LEFT, 0, 18);
     w->obj = row;
     return 0;
 }
