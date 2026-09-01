@@ -33,8 +33,9 @@ LOG_MODULE_DECLARE(peripheral_status, CONFIG_ZMK_LOG_LEVEL);
 #include <zmk/activity.h>
 
 #include <zmk/event_manager.h>
+#include <zmk/keys.h>
 #include <zmk/events/layer_state_changed.h>
-#include <zmk/events/modifiers_state_changed.h>
+#include <zmk/events/keycode_state_changed.h>
 #include <zmk/events/battery_state_changed.h>
 #include <zmk/events/wpm_state_changed.h>
 #include <zmk/events/usb_conn_state_changed.h>
@@ -83,6 +84,13 @@ static void fill_current_state(struct peripheral_status_adv_data *s) {
     if (zmk_ble_active_profile_is_connected()) flags |= PERIPHERAL_STATUS_FLAG_BLE_CONNECTED;
     if (!zmk_ble_active_profile_is_open())     flags |= PERIPHERAL_STATUS_FLAG_BLE_BONDED;
 #endif
+    enum zmk_transport selected = zmk_endpoint_get_selected().transport;
+    if (selected == ZMK_TRANSPORT_NONE) {
+        selected = zmk_endpoint_get_preferred_transport();
+    }
+    if (selected == ZMK_TRANSPORT_USB) {
+        flags |= PERIPHERAL_STATUS_FLAG_OUTPUT_USB_SELECTED;
+    }
     s->status_flags = flags;
 
     s->device_role = 1; /* CENTRAL */
@@ -164,13 +172,27 @@ static int on_layer_changed(const zmk_event_t *eh) {
 ZMK_LISTENER(peripheral_status_layer, on_layer_changed);
 ZMK_SUBSCRIPTION(peripheral_status_layer, zmk_layer_state_changed);
 
+/* zmk_modifiers_state_changed is never actually raised by ZMK core (no
+ * caller in hid.c/hid_listener.c) -- plain &kp LSHIFT-style modifier presses
+ * only flow through zmk_keycode_state_changed, so we watch that instead and
+ * filter to modifier keycodes with is_mod() to avoid firing on every key. */
 static int on_mods_changed(const zmk_event_t *eh) {
-    ARG_UNUSED(eh);
+    const struct zmk_keycode_state_changed *ev = as_zmk_keycode_state_changed(eh);
+    if (!ev) {
+        return ZMK_EV_EVENT_BUBBLE;
+    }
+    /* Either the keycode itself is a modifier (plain &kp LSHIFT), or it
+     * carries modifier bits alongside a non-mod key (e.g. &kp LC(A)). */
+    bool is_mod_related = is_mod(ev->usage_page, ev->keycode) ||
+                          ev->explicit_modifiers != 0 || ev->implicit_modifiers != 0;
+    if (!is_mod_related) {
+        return ZMK_EV_EVENT_BUBBLE;
+    }
     raise_status(KEY_MODS, false);
     return ZMK_EV_EVENT_BUBBLE;
 }
 ZMK_LISTENER(peripheral_status_mods, on_mods_changed);
-ZMK_SUBSCRIPTION(peripheral_status_mods, zmk_modifiers_state_changed);
+ZMK_SUBSCRIPTION(peripheral_status_mods, zmk_keycode_state_changed);
 
 static int on_battery_changed(const zmk_event_t *eh) {
     ARG_UNUSED(eh);
