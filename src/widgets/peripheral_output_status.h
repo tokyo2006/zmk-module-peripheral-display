@@ -4,6 +4,7 @@
 struct peripheral_output_status_state {
     bool usb_connected;
     bool ble_connected;
+    bool usb_selected;
 };
 
 ZMK_PERIPHERAL_DISPLAY_WIDGET(output_status, struct peripheral_output_status_state)

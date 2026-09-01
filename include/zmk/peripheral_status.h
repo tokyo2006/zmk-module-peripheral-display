@@ -49,6 +49,10 @@ _Static_assert(PERIPHERAL_STATUS_PAYLOAD_SIZE == 26,
 #define PERIPHERAL_STATUS_FLAG_USB_HID_READY (1 << 3)
 #define PERIPHERAL_STATUS_FLAG_BLE_CONNECTED (1 << 4)
 #define PERIPHERAL_STATUS_FLAG_BLE_BONDED    (1 << 5)
+/* Set when USB is the actively selected output transport; clear means BLE
+ * is selected. Distinct from USB_CONNECTED/BLE_CONNECTED, which just track
+ * physical link state -- both can be true while only one is in use. */
+#define PERIPHERAL_STATUS_FLAG_OUTPUT_USB_SELECTED (1 << 6)
 
 #define PERIPHERAL_MOD_FLAG_LCTL (1 << 0)
 #define PERIPHERAL_MOD_FLAG_LSFT (1 << 1)
