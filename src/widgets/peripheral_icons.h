@@ -21,5 +21,17 @@ extern const lv_img_dsc_t opt_icon;
 extern const lv_img_dsc_t sym_usb;
 extern const lv_img_dsc_t sym_bt;
 
+/* Output status glyphs (5x5): HID-ready / bonded+connected / bonded-but-open */
+extern const lv_img_dsc_t sym_ok;
+extern const lv_img_dsc_t sym_nok;
+extern const lv_img_dsc_t sym_open;
+
+/* BLE profile slot number (5x6), 1-indexed */
+extern const lv_img_dsc_t sym_1;
+extern const lv_img_dsc_t sym_2;
+extern const lv_img_dsc_t sym_3;
+extern const lv_img_dsc_t sym_4;
+extern const lv_img_dsc_t sym_5;
+
 /* Battery icon (10x6) */
 extern const lv_img_dsc_t sym_battery;
