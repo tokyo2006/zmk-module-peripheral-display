@@ -234,3 +234,27 @@ const lv_img_dsc_t sym_usb = {
   .data_size = 36,
   .data = sym_usb_map,
 };
+
+/* ============ Battery icon (10x6) ============ */
+
+#ifndef LV_ATTRIBUTE_IMG_SYM_BATTERY
+#define LV_ATTRIBUTE_IMG_SYM_BATTERY
+#endif
+const LV_ATTRIBUTE_MEM_ALIGN LV_ATTRIBUTE_LARGE_CONST LV_ATTRIBUTE_IMG_SYM_BATTERY uint8_t sym_battery_map[] = {
+  0xff, 0xff, 0xff, 0xff, 	/*Color of index 0*/
+  0x00, 0x00, 0x00, 0xff, 	/*Color of index 1*/
+
+  0xff, 0x00,
+  0x81, 0x00,
+  0x81, 0xc0,
+  0x81, 0xc0,
+  0x81, 0x00,
+  0xff, 0x00,
+};
+const lv_img_dsc_t sym_battery = {
+  .header.cf = LV_COLOR_FORMAT_I1,
+  .header.w = 10,
+  .header.h = 6,
+  .data_size = 20,
+  .data = sym_battery_map,
+};

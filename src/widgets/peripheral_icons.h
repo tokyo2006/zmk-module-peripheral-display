@@ -20,3 +20,6 @@ extern const lv_img_dsc_t opt_icon;
 /* Output status icons (9x14) */
 extern const lv_img_dsc_t sym_usb;
 extern const lv_img_dsc_t sym_bt;
+
+/* Battery icon (10x6) */
+extern const lv_img_dsc_t sym_battery;
