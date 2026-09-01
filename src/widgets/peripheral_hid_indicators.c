@@ -9,18 +9,24 @@ int zmk_widget_peripheral_hid_indicators_init(
     struct zmk_widget_peripheral_hid_indicators *w, lv_obj_t *p)
 {
     lv_obj_t *row = lv_obj_create(p);
-    lv_obj_set_size(row, 48, 12);
+    lv_obj_set_size(row, 24, 24);
     lv_obj_set_style_bg_opa(row, LV_OPA_TRANSP, 0);
 
+    /* Stacked vertically, not side by side: without an explicit font these
+     * labels used LVGL's (much wider than unscii_8) default font, so the
+     * old i*16 horizontal spacing wasn't enough and all three drew on top
+     * of each other. Stacking avoids re-measuring text width entirely, and
+     * keeps this widget inside x:0-24 (battery claims x:64-128). */
     for (int i = 0; i < 3; i++) {
         labels[i] = lv_label_create(row);
         lv_label_set_text(labels[i], names[i]);
-        lv_obj_align(labels[i], LV_ALIGN_LEFT_MID, i * 16, 0);
+        lv_obj_set_style_text_font(labels[i], &lv_font_unscii_8, 0);
+        lv_obj_align(labels[i], LV_ALIGN_TOP_LEFT, 0, i * 8);
         lv_obj_set_style_text_opa(labels[i], LV_OPA_60, 0);
     }
-    /* Top-left, below the output_status row (to its right would overlap
-     * the battery widget, which claims the top-right x:64-128 region). */
-    lv_obj_align(row, LV_ALIGN_TOP_LEFT, 0, 18);
+    /* Top-left, below the output_status row (now 20px tall: icons + the
+     * selection bar above them + the HID-ready glyph below them). */
+    lv_obj_align(row, LV_ALIGN_TOP_LEFT, 0, 20);
     w->obj = row;
     return 0;
 }
