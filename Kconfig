@@ -32,16 +32,6 @@ config ZMK_PERIPHERAL_DISPLAY_WIDGETS
     default y
     depends on ZMK_PERIPHERAL_DISPLAY && !ZMK_SPLIT_ROLE_CENTRAL
 
-config ZMK_PERIPHERAL_DISPLAY_DEBUG
-    bool "Show a debug line with received status on the peripheral display"
-    default n
-    depends on ZMK_PERIPHERAL_DISPLAY_WIDGETS
-    help
-      Temporary debug aid: renders a small line at the bottom-left of the
-      peripheral display showing the last received status (layer, battery,
-      flags, modifiers, wpm) plus a receive counter. Turn off once the
-      split data channel is stable.
-
 # T9d modifiers widget style (Mac vs Windows icons).
 # Widgets read IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_MODIFIERS_STYLE_MAC),
 # so this must be a real boolean symbol (not an integer).

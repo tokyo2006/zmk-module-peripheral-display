@@ -80,11 +80,6 @@ static struct zmk_widget_peripheral_bongo_cat bongo_cat_w;
 static lv_obj_t *no_link_label;
 static bool had_link;
 
-#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_DEBUG)
-static lv_obj_t *dbg_label;
-static uint32_t recv_count;
-#endif
-
 static void set_link_visible(bool linked) {
     if (linked) {
         lv_obj_add_flag(no_link_label, LV_OBJ_FLAG_HIDDEN);
@@ -116,16 +111,6 @@ static void poll_shadow(lv_timer_t *t) {
         had_link = true;
         set_link_visible(true);
     }
-
-#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_DEBUG)
-    recv_count++;
-    lv_label_set_text_fmt(dbg_label, "L%u #%u F%02x M%02x W%u",
-                          (unsigned)s.data.active_layer,
-                          (unsigned)recv_count,
-                          (unsigned)s.data.status_flags,
-                          (unsigned)s.data.modifier_flags,
-                          (unsigned)s.data.wpm_value);
-#endif
 
 #if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_LAYER)
     zmk_widget_peripheral_layer_status_update(&layer_w, &s.data);
@@ -211,18 +196,6 @@ int peripheral_display_init(lv_obj_t *parent) {
     /* Offset above the center layer label so the two don't overlap. */
     lv_obj_align(no_link_label, LV_ALIGN_CENTER, 0, -24);
 
-#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_DEBUG)
-    dbg_label = lv_label_create(parent);
-    lv_label_set_text(dbg_label, "---");
-    lv_obj_set_style_text_font(dbg_label, &lv_font_unscii_8, 0);
-#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_MODIFIERS)
-    /* Sit directly above the modifier icon row (also bottom-left) so the
-     * two don't draw on top of each other. */
-    lv_obj_align_to(dbg_label, modifiers_w.obj, LV_ALIGN_OUT_TOP_LEFT, 0, 0);
-#else
-    lv_obj_align(dbg_label, LV_ALIGN_BOTTOM_LEFT, 0, -2);
-#endif
-#endif
     /* Visible initially: shows "NO LINK" until the first status arrives. */
     had_link = false;
     set_link_visible(false);
