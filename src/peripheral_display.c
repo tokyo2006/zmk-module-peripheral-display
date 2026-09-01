@@ -119,13 +119,12 @@ static void poll_shadow(lv_timer_t *t) {
 
 #if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_DEBUG)
     recv_count++;
-    lv_label_set_text_fmt(dbg_label, "L%u %u%% F%02x M%02x W%u #%u",
+    lv_label_set_text_fmt(dbg_label, "L%u #%u F%02x M%02x W%u",
                           (unsigned)s.data.active_layer,
-                          (unsigned)s.data.battery_level,
+                          (unsigned)recv_count,
                           (unsigned)s.data.status_flags,
                           (unsigned)s.data.modifier_flags,
-                          (unsigned)s.data.wpm_value,
-                          (unsigned)recv_count);
+                          (unsigned)s.data.wpm_value);
 #endif
 
 #if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_LAYER)
