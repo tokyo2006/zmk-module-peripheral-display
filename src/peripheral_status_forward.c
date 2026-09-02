@@ -176,6 +176,21 @@ ZMK_SUBSCRIPTION(peripheral_status_layer, zmk_layer_state_changed);
  * caller in hid.c/hid_listener.c) -- plain &kp LSHIFT-style modifier presses
  * only flow through zmk_keycode_state_changed, so we watch that instead and
  * filter to modifier keycodes with is_mod() to avoid firing on every key. */
+
+/* ZMK's own hid_listener is subscribed to the same event and is the one
+ * that actually updates zmk_hid's modifier bits -- listener order across
+ * this module and core ZMK isn't something we control, and in practice
+ * ours can run first. Reading zmk_hid_get_keyboard_report() synchronously
+ * here would then see the state from *before* this key's press/release,
+ * always one step behind. Defer the actual read to a work item so it runs
+ * after the whole synchronous event-dispatch chain (hid_listener included)
+ * has finished. */
+static void mods_raise_work_handler(struct k_work *work) {
+    ARG_UNUSED(work);
+    raise_status(KEY_MODS, false);
+}
+K_WORK_DEFINE(mods_raise_work, mods_raise_work_handler);
+
 static int on_mods_changed(const zmk_event_t *eh) {
     const struct zmk_keycode_state_changed *ev = as_zmk_keycode_state_changed(eh);
     if (!ev) {
@@ -188,7 +203,7 @@ static int on_mods_changed(const zmk_event_t *eh) {
     if (!is_mod_related) {
         return ZMK_EV_EVENT_BUBBLE;
     }
-    raise_status(KEY_MODS, false);
+    k_work_submit(&mods_raise_work);
     return ZMK_EV_EVENT_BUBBLE;
 }
 ZMK_LISTENER(peripheral_status_mods, on_mods_changed);
