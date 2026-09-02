@@ -7,15 +7,25 @@ zephyr_include_directories(include)
 # (filled in by later tasks; left empty here so the module builds
 #  even when the feature is disabled)
 if(CONFIG_ZMK_PERIPHERAL_DISPLAY)
+    # ASDC BLE L2CAP data channel (central -> peripheral), enabled only when a
+    # zmk,peripheral-display-asdc node exists in the keyboard devicetree.
+    if(CONFIG_ZMK_ARBITRARY_SPLIT_DATA_CHANNEL)
+        target_sources(app PRIVATE src/asdc/asdc_core.c)
+        if(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
+            target_sources(app PRIVATE src/asdc/asdc_ble_central.c)
+        else()
+            target_sources(app PRIVATE src/asdc/asdc_ble_peripheral.c)
+        endif()
+    endif()
+
     # shared status pack/unpack + shadow state
     target_sources(app PRIVATE src/peripheral_status.c)
-    # shared relay event definition (central forwards, peripheral receives)
-    target_sources(app PRIVATE src/peripheral_status_event.c)
 endif()
 
 if(CONFIG_ZMK_PERIPHERAL_STATUS_FORWARD)
-    # central: subscribe ZMK events -> raise status event -> relay to peripheral
+    # central: subscribe ZMK events -> send status over ASDC
     target_sources(app PRIVATE src/peripheral_status_forward.c)
+    target_sources(app PRIVATE src/peripheral_status_forward_debounce.c)
 endif()
 
 if(CONFIG_ZMK_PERIPHERAL_STATUS_RECEIVE)

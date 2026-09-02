@@ -4,7 +4,6 @@
 struct peripheral_hid_indicators_state {
     bool caps;
     bool num;
-    bool scroll;
 };
 
 ZMK_PERIPHERAL_DISPLAY_WIDGET(hid_indicators, struct peripheral_hid_indicators_state)

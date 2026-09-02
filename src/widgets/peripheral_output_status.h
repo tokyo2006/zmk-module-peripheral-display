@@ -2,8 +2,11 @@
 #include <zmk/peripheral_display.h>
 
 struct peripheral_output_status_state {
-    bool usb_connected;
+    bool usb_hid_ready;
     bool ble_connected;
+    bool ble_bonded;
+    bool usb_selected;
+    uint8_t profile_slot;
 };
 
 ZMK_PERIPHERAL_DISPLAY_WIDGET(output_status, struct peripheral_output_status_state)

@@ -13,10 +13,12 @@ UI layout.
 ## Features
 
 - Layer name (with auto-scroll for long names)
-- Modifier icons (Windows or Mac style, configurable)
-- HID indicators (caps word)
-- Dual battery (central + peripheral)
-- Output status (USB / BLE)
+- Modifier icons (Windows or Mac style, configurable), underlined while held
+- HID indicators: Caps Lock / Num Lock, underlined while the host LED is on
+- Dual battery (central + peripheral), each with a charge-level icon
+- Output status: USB / BLE icons, a checkmark for HID-ready / bonded state,
+  the active BLE profile slot number, and a bar marking which transport is
+  actually selected
 - WPM meter (optional layout)
 - Bongo cat animation (reacts to typing)
 
@@ -93,7 +95,29 @@ GPIO conflicts with your keyboard matrix. Uncomment + customize:
 > the other way up, remove the `rotate-180;` line — otherwise the image
 > will render upside down.
 
-### 4. Configure Kconfig (required on both halves)
+### 4. Add the split data channel node (required on **both** halves)
+
+Status travels from central to peripheral over a dedicated BLE L2CAP
+channel (ASDC — "arbitrary split data channel"), not GATT. It's enabled
+purely by the presence of a devicetree node — there's no separate Kconfig
+flag to flip. Add this node to **both** the central's and the
+peripheral's overlay, with the **same** `channel-id` on each side:
+
+```devicetree
+/ {
+    asdc0: asdc0 {
+        compatible = "zmk,peripheral-display-asdc";
+        channel-id = <1>;
+        status = "okay";
+    };
+};
+```
+
+If this node is missing on either half, `CONFIG_ZMK_ARBITRARY_SPLIT_DATA_CHANNEL`
+never turns on for that half and nothing will be sent/received — the
+symptom is a peripheral screen stuck on "NO LINK" forever.
+
+### 5. Configure Kconfig (required on both halves)
 
 The display renders on the **peripheral** half, but the status it shows
 is produced on the **central** half. Each half needs a couple of flags —
@@ -103,27 +127,19 @@ these are the most commonly missed bits.
 
 The shield's own `peripheral_lcd_ls013.conf` already turns on
 `CONFIG_ZMK_DISPLAY`, `CONFIG_ZMK_PERIPHERAL_DISPLAY`, the receiver and
-the widgets. You only need to add **one** flag yourself:
-
-```conf
-# config/<peripheral_kb>.conf
-CONFIG_BT_GATT_CLIENT=y
-```
-
-The peripheral subscribes to the central's status characteristic over
-GATT, so it must be built with the GATT *client* role — without it,
-`bt_gatt_discover` / `bt_gatt_subscribe` are undefined at link time.
+the widgets, and the ASDC node from step 4 turns on the L2CAP channel
+itself — there's nothing else to add here.
 
 #### Central (the half connected to the PC)
 
-The central packs its state and notifies the peripheral. It needs the
-module gate plus the two subsystems the forward code reads:
+The central packs its state and sends it over the ASDC channel. It needs
+the module gate plus the two subsystems the forward code reads:
 
 ```conf
 # config/<central_kb>.conf
 CONFIG_ZMK_PERIPHERAL_DISPLAY=y   # enables status forwarding
 CONFIG_ZMK_WPM=y                  # forward code calls zmk_wpm_get_state()
-CONFIG_ZMK_HID_INDICATORS=y       # forward code listens to zmk_hid_indicators_changed
+CONFIG_ZMK_HID_INDICATORS=y       # forward code calls zmk_hid_indicators_get_current_profile()
 ```
 
 > The central does **not** need a display of its own. Enabling
@@ -188,11 +204,12 @@ intervals of the third-party driver.
 3. Check on peripheral screen:
    - [ ] Layer name appears within 1 s of split-connect
    - [ ] Layer change updates <200 ms
-   - [ ] Modifier icons toggle on press
+   - [ ] Modifier icons + underline toggle on press
    - [ ] Bongo cat paws animate while typing
-   - [ ] Both batteries render with correct %
-   - [ ] Caps-word indicator toggles with caps-word
-   - [ ] Output status changes on USB plug/unplug
+   - [ ] Both batteries render with correct % and icon fill level
+   - [ ] CAP/NUM indicators + underline toggle with Caps/Num Lock
+   - [ ] Output status changes on USB plug/unplug, selection bar tracks the
+     active transport, BLE profile number matches the selected slot
 
 ## Known limitations
 
@@ -206,10 +223,15 @@ intervals of the third-party driver.
 - Status struct (26 bytes) shape copied from
   [prospector-zmk-module](https://github.com/t-ogura/zmk-config-prospector)
   (MIT).
-- Bongo cat animation frames from
+- Bongo cat animation frames, modifier/output-status/HID-ready icons, and
+  the BLE profile number glyphs from
   [englmaxi/zmk-dongle-display](https://github.com/englmaxi/zmk-dongle-display)
   (MIT). See `LICENSE-3RD-PARTY`.
-- UI layout inspired by `zmk-dongle-display`.
+- UI layout inspired by `zmk-dongle-display`. The battery icon is original
+  artwork for this module.
+- ASDC (arbitrary split data channel) transport integrated from
+  [dmhuisma/zmk_arbitrary_split_data_channel](https://github.com/dmhuisma/zmk_arbitrary_split_data_channel)
+  (MIT).
 
 ## License
 

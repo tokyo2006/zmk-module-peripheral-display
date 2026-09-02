@@ -2,45 +2,58 @@
  * Copyright (c) 2026 The zmk-module-peripheral-display Contributors
  * SPDX-License-Identifier: MIT
  *
- * Peripheral-side receiver: the central half ships a full status snapshot as
- * a relay event (`peripheral_status_update`). This file receives it over the
- * standard ZMK split relay transport and writes it into the local shadow
- * state, which the display widgets poll. No custom GATT service involved.
+ * Peripheral-side receiver: registers an ASDC receive callback. When the
+ * central sends a status snapshot over the BLE L2CAP data channel, the
+ * callback writes it into the local shadow state that the display widgets
+ * poll. No custom GATT service involved.
  */
 
 #include <string.h>
 #include <zephyr/kernel.h>
+#include <zephyr/init.h>
+#include <zephyr/device.h>
 #include <zephyr/logging/log.h>
 
-#include <zmk/event_manager.h>
 #include <zmk/peripheral_status.h>
-#include <zmk/peripheral_status_event.h>
+#include <zmk/asdc.h>
 
 LOG_MODULE_DECLARE(peripheral_status, CONFIG_ZMK_LOG_LEVEL);
 
 #if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_STATUS_RECEIVE)
 
-/* Receive the relayed `peripheral_status_update` event from the central.
- * On arrival the macro re-raises a `peripheral_status_update` event, which
- * our listener below consumes to refresh the shadow state. */
-ZMK_RELAY_EVENT_HANDLE(peripheral_status_update, pd, )
+static void on_status_data(const struct device *dev, void *sender_conn,
+                           uint8_t *data, size_t len)
+{
+    ARG_UNUSED(dev);
+    ARG_UNUSED(sender_conn);
 
-static int on_status_update(const zmk_event_t *eh) {
-    const struct peripheral_status_update *ev =
-        as_peripheral_status_update(eh);
-    if (ev == NULL) {
-        return ZMK_EV_EVENT_BUBBLE;
+    if (len != sizeof(struct peripheral_status_adv_data)) {
+        LOG_WRN("peripheral-display: unexpected status len %u", (unsigned)len);
+        return;
     }
-    if (peripheral_status_shadow_set(&ev->data) != 0) {
+
+    const struct peripheral_status_adv_data *s =
+        (const struct peripheral_status_adv_data *)data;
+    if (peripheral_status_shadow_set(s) != 0) {
         LOG_WRN("peripheral-display: shadow set failed");
     } else {
         LOG_INF("peripheral-display: recv batt=%u layer=%u flags=0x%02x",
-                (unsigned)ev->data.battery_level, (unsigned)ev->data.active_layer,
-                (unsigned)ev->data.status_flags);
+                (unsigned)s->battery_level, (unsigned)s->active_layer,
+                (unsigned)s->status_flags);
     }
-    return ZMK_EV_EVENT_HANDLED;
 }
-ZMK_LISTENER(peripheral_status_handle, on_status_update);
-ZMK_SUBSCRIPTION(peripheral_status_handle, peripheral_status_update);
+
+static int peripheral_status_receiver_init(const struct device *device) {
+    ARG_UNUSED(device);
+    const struct device *dev = DEVICE_DT_GET(DT_NODELABEL(asdc0));
+    if (!device_is_ready(dev)) {
+        LOG_WRN("peripheral-display: asdc0 not ready");
+        return -ENODEV;
+    }
+    asdc_register_recv_cb(dev, on_status_data);
+    LOG_INF("peripheral-display: registered ASDC receive callback");
+    return 0;
+}
+SYS_INIT(peripheral_status_receiver_init, APPLICATION, 99);
 
 #endif /* IS_ENABLED(CONFIG_ZMK_PERIPHERAL_STATUS_RECEIVE) */
