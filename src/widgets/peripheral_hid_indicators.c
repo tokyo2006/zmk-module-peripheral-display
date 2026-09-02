@@ -3,15 +3,15 @@
 #include <string.h>
 #include <dt-bindings/zmk/hid_indicators.h>
 
-static lv_obj_t *labels[3];
-static lv_obj_t *underlines[3];
-static const char *const names[3] = {"CAP", "NUM", "SCR"};
+static lv_obj_t *labels[2];
+static lv_obj_t *underlines[2];
+static const char *const names[2] = {"CAP", "NUM"};
 
 int zmk_widget_peripheral_hid_indicators_init(
     struct zmk_widget_peripheral_hid_indicators *w, lv_obj_t *p)
 {
     lv_obj_t *row = lv_obj_create(p);
-    lv_obj_set_size(row, 24, 28);
+    lv_obj_set_size(row, 24, 19);
     lv_obj_set_style_bg_opa(row, LV_OPA_TRANSP, 0);
 
     /* Stacked vertically, not side by side: without an explicit font these
@@ -20,8 +20,8 @@ int zmk_widget_peripheral_hid_indicators_init(
      * of each other. Stacking avoids re-measuring text width entirely, and
      * keeps this widget inside x:0-24 (battery claims x:64-128). Each label
      * has its own 9-row slot (8px text + 1px gap) so its underline doesn't
-     * crowd the next label. */
-    for (int i = 0; i < 3; i++) {
+     * crowd the next label. Scroll Lock dropped -- nothing needs it yet. */
+    for (int i = 0; i < 2; i++) {
         labels[i] = lv_label_create(row);
         lv_label_set_text(labels[i], names[i]);
         lv_obj_set_style_text_font(labels[i], &lv_font_unscii_8, 0);
@@ -51,16 +51,15 @@ void zmk_widget_peripheral_hid_indicators_update(
 {
     bool caps = (s->hid_indicators & HID_INDICATOR_CAPS_LOCK) != 0;
     bool num  = (s->hid_indicators & HID_INDICATOR_NUM_LOCK) != 0;
-    bool scrl = (s->hid_indicators & HID_INDICATOR_SCROLL_LOCK) != 0;
 
     struct peripheral_hid_indicators_state new_state = {
-        .caps = caps, .num = num, .scroll = scrl,
+        .caps = caps, .num = num,
     };
     if (memcmp(&w->state, &new_state, sizeof(new_state)) == 0) return;
     w->state = new_state;
 
-    bool on[3] = { caps, num, scrl };
-    for (int i = 0; i < 3; i++) {
+    bool on[2] = { caps, num };
+    for (int i = 0; i < 2; i++) {
         lv_obj_set_style_text_opa(labels[i], on[i] ? LV_OPA_COVER : LV_OPA_60, 0);
         if (on[i]) {
             lv_obj_clear_flag(underlines[i], LV_OBJ_FLAG_HIDDEN);
