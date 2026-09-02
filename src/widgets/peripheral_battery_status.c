@@ -13,14 +13,14 @@ static lv_obj_t *peripheral_label;
 static lv_obj_t *peripheral_icon;
 static lv_obj_t *peripheral_fill;
 
-/* sym_battery's interior (inside the 2px border, at 2x scale) is 12x8 px
- * starting at (2,2). Size the fill bar to that fraction of pct so the icon
+/* sym_battery's interior (inside the 2px-wide/1px-tall border) is 12x4 px
+ * starting at (2,1). Size the fill bar to that fraction of pct so the icon
  * actually reflects charge instead of always drawing empty. */
 static void set_battery_fill(lv_obj_t *fill, lv_obj_t *icon, uint8_t pct) {
     int w = (pct * 12) / 100;
     if (pct > 0 && w < 1) w = 1;
     lv_obj_set_width(fill, w);
-    lv_obj_align_to(fill, icon, LV_ALIGN_TOP_LEFT, 2, 2);
+    lv_obj_align_to(fill, icon, LV_ALIGN_TOP_LEFT, 2, 1);
 }
 
 static void set_row(lv_obj_t *label, lv_obj_t *icon, lv_obj_t *fill, uint8_t pct) {
@@ -51,7 +51,7 @@ int zmk_widget_peripheral_battery_status_init(
     lv_obj_set_style_bg_color(central_fill, lv_color_black(), 0);
     lv_obj_set_style_bg_opa(central_fill, LV_OPA_COVER, 0);
     lv_obj_set_style_border_width(central_fill, 0, 0);
-    lv_obj_set_size(central_fill, 0, 8);
+    lv_obj_set_size(central_fill, 0, 4);
 
     peripheral_row = lv_obj_create(col);
     lv_obj_set_size(peripheral_row, 64, 16);
@@ -65,7 +65,7 @@ int zmk_widget_peripheral_battery_status_init(
     lv_obj_set_style_bg_color(peripheral_fill, lv_color_black(), 0);
     lv_obj_set_style_bg_opa(peripheral_fill, LV_OPA_COVER, 0);
     lv_obj_set_style_border_width(peripheral_fill, 0, 0);
-    lv_obj_set_size(peripheral_fill, 0, 8);
+    lv_obj_set_size(peripheral_fill, 0, 4);
 
     lv_obj_align(col, LV_ALIGN_TOP_RIGHT, 0, 0);
     w->obj = col;
