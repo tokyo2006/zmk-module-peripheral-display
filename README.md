@@ -230,7 +230,8 @@ intervals of the third-party driver.
 - UI layout inspired by `zmk-dongle-display`. The battery icon is original
   artwork for this module.
 - ASDC (arbitrary split data channel) transport integrated from
-  dmhuisma/zmk_arbitrary_split_data_channel (MIT).
+  [dmhuisma/zmk_arbitrary_split_data_channel](https://github.com/dmhuisma/zmk_arbitrary_split_data_channel)
+  (MIT).
 
 ## License
 

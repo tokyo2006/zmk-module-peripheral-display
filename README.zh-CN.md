@@ -219,7 +219,8 @@ ZMK main / Zephyr 4.x 已经在该驱动里支持了 VCOM 翻转；它只是缺�
   （MIT）。见 `LICENSE-3RD-PARTY`。
 - UI 布局灵感来自 `zmk-dongle-display`。电池图标是本模块原创绘制的。
 - ASDC（arbitrary split data channel）传输层整合自
-  dmhuisma/zmk_arbitrary_split_data_channel（MIT）。
+  [dmhuisma/zmk_arbitrary_split_data_channel](https://github.com/dmhuisma/zmk_arbitrary_split_data_channel)
+  （MIT）。
 
 ## 许可证
 
