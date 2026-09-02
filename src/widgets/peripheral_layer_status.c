@@ -16,7 +16,11 @@ int zmk_widget_peripheral_layer_status_init(
     struct zmk_widget_peripheral_layer_status *w, lv_obj_t *p)
 {
     label = lv_label_create(p);
-    lv_obj_set_style_text_font(label, &lv_font_unscii_8, 0);
+    /* Bigger than the rest of the UI on purpose: this is the thing glanced
+     * at most, and the panel is 128x128 (not the 128x64 this layout was
+     * originally sized for), so there's room to make it the focal point of
+     * the middle band instead of a small line lost in empty space. */
+    lv_obj_set_style_text_font(label, &lv_font_unscii_16, 0);
     lv_label_set_text(label, "L0");
     w->obj = label;
     return 0;

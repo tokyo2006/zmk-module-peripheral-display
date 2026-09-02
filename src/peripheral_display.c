@@ -163,7 +163,10 @@ int peripheral_display_init(lv_obj_t *parent) {
 
 #if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_LAYER)
     zmk_widget_peripheral_layer_status_init(&layer_w, parent);
-    lv_obj_align(layer_w.obj, LV_ALIGN_CENTER, 0, 0);
+    /* Anchors the middle band: status icons occupy roughly y:0-40, the
+     * modifier row + bongo cat occupy roughly y:104-128, so this sits a
+     * little above true center to leave room for WPM directly below it. */
+    lv_obj_align(layer_w.obj, LV_ALIGN_CENTER, 0, -10);
 #endif
 #if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_OUTPUT)
     zmk_widget_peripheral_output_status_init(&output_w, parent);
@@ -182,12 +185,13 @@ int peripheral_display_init(lv_obj_t *parent) {
 #endif
 #if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_BONGO_CAT)
     zmk_widget_peripheral_bongo_cat_init(&bongo_cat_w, parent);
-    /* bongo cat sits slightly above the bottom-right so layer/WPM can go below it */
     lv_obj_align(bongo_cat_w.obj, LV_ALIGN_BOTTOM_RIGHT, 0, -7);
 #endif
 #if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_WPM)
     zmk_widget_peripheral_wpm_status_init(&wpm_w, parent);
-    lv_obj_align_to(wpm_w.obj, bongo_cat_w.obj, LV_ALIGN_BOTTOM_RIGHT, 0, 5);
+    /* Now grouped with the layer name in the middle band instead of
+     * crowding the bongo cat's bottom edge. */
+    lv_obj_align_to(wpm_w.obj, layer_w.obj, LV_ALIGN_OUT_BOTTOM_MID, 0, 4);
 #endif
 
     no_link_label = lv_label_create(parent);
