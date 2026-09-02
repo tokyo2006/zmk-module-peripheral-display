@@ -21,26 +21,34 @@ int zmk_widget_peripheral_output_status_init(
     lv_obj_set_style_bg_opa(row, LV_OPA_TRANSP, 0);
 
     /* usb/bt icons start 3px down to leave room for the selection bar
-     * that sits above whichever one is active. */
+     * that sits above whichever one is active.
+     *
+     * lv_img_set_src() must run BEFORE any align call that depends on the
+     * object's own size (CENTER, or anything measuring from its own
+     * width/height) -- align computes position from whatever size the
+     * object has *at that moment*, and doesn't re-run when the size
+     * changes later. usb_hid_status used LV_ALIGN_CENTER with src set
+     * after align, so it centered against a 0x0 size and the real 5x5
+     * glyph ended up offset down-right of usb_img's actual center. */
     usb_img = lv_img_create(row);
-    lv_obj_align(usb_img, LV_ALIGN_TOP_LEFT, 0, 3);
     lv_img_set_src(usb_img, &sym_usb);
+    lv_obj_align(usb_img, LV_ALIGN_TOP_LEFT, 0, 3);
 
     usb_hid_status = lv_img_create(row);
-    lv_obj_align_to(usb_hid_status, usb_img, LV_ALIGN_CENTER, 0, 0);
     lv_img_set_src(usb_hid_status, &sym_nok);
+    lv_obj_align_to(usb_hid_status, usb_img, LV_ALIGN_CENTER, 0, 0);
 
     bt_img = lv_img_create(row);
-    lv_obj_align_to(bt_img, usb_img, LV_ALIGN_OUT_RIGHT_TOP, 4, 0);
     lv_img_set_src(bt_img, &sym_bt);
+    lv_obj_align_to(bt_img, usb_img, LV_ALIGN_OUT_RIGHT_TOP, 4, 0);
 
     bt_status = lv_img_create(row);
-    lv_obj_align_to(bt_status, bt_img, LV_ALIGN_OUT_RIGHT_TOP, 1, 1);
     lv_img_set_src(bt_status, &sym_open);
+    lv_obj_align_to(bt_status, bt_img, LV_ALIGN_OUT_RIGHT_TOP, 1, 1);
 
     bt_number = lv_img_create(row);
-    lv_obj_align_to(bt_number, bt_img, LV_ALIGN_OUT_RIGHT_TOP, 1, 8);
     lv_img_set_src(bt_number, &sym_1);
+    lv_obj_align_to(bt_number, bt_img, LV_ALIGN_OUT_RIGHT_TOP, 1, 8);
 
     /* Short bar above whichever transport is actively selected. */
     selection_bar = lv_obj_create(row);
