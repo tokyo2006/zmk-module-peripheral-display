@@ -27,7 +27,7 @@ int zmk_widget_peripheral_output_status_init(
     lv_img_set_src(usb_img, &sym_usb);
 
     usb_hid_status = lv_img_create(row);
-    lv_obj_align_to(usb_hid_status, usb_img, LV_ALIGN_BOTTOM_LEFT, 2, -3);
+    lv_obj_align_to(usb_hid_status, usb_img, LV_ALIGN_CENTER, 0, 0);
     lv_img_set_src(usb_hid_status, &sym_nok);
 
     bt_img = lv_img_create(row);
