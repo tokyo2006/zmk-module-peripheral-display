@@ -26,9 +26,6 @@ static void set_battery_fill(lv_obj_t *fill, lv_obj_t *icon, uint8_t pct) {
 static void set_row(lv_obj_t *label, lv_obj_t *icon, lv_obj_t *fill, uint8_t pct) {
     if (pct > 100) pct = 100;
     lv_label_set_text_fmt(label, "%u%%", pct);
-    /* Re-align every update: the label's rendered width changes with the
-     * digit count, so the icon needs to follow it to stay right after it. */
-    lv_obj_align_to(icon, label, LV_ALIGN_OUT_RIGHT_MID, 2, 0);
     set_battery_fill(fill, icon, pct);
 }
 
@@ -44,9 +41,15 @@ int zmk_widget_peripheral_battery_status_init(
     lv_obj_set_style_bg_opa(central_row, LV_OPA_TRANSP, 0);
     lv_obj_align(central_row, LV_ALIGN_TOP_LEFT, 0, 0);
     central_label = lv_label_create(central_row);
+    /* Fixed width (unscii_8: 8px/char, wide enough for "100%") instead of
+     * letting the label auto-size to its text -- otherwise "99%" vs "100%"
+     * puts the icon that follows it at a different x each time the digit
+     * count changes, and the two rows visibly stop lining up. */
+    lv_obj_set_width(central_label, 32);
     lv_obj_align(central_label, LV_ALIGN_LEFT_MID, 0, 0);
     central_icon = lv_img_create(central_row);
     lv_img_set_src(central_icon, &sym_battery);
+    lv_obj_align(central_icon, LV_ALIGN_LEFT_MID, 34, 0);
     central_fill = lv_obj_create(central_row);
     lv_obj_set_style_bg_color(central_fill, lv_color_black(), 0);
     lv_obj_set_style_bg_opa(central_fill, LV_OPA_COVER, 0);
@@ -61,9 +64,11 @@ int zmk_widget_peripheral_battery_status_init(
     lv_obj_set_style_bg_opa(peripheral_row, LV_OPA_TRANSP, 0);
     lv_obj_align(peripheral_row, LV_ALIGN_BOTTOM_LEFT, 0, 0);
     peripheral_label = lv_label_create(peripheral_row);
+    lv_obj_set_width(peripheral_label, 32);
     lv_obj_align(peripheral_label, LV_ALIGN_LEFT_MID, 0, 0);
     peripheral_icon = lv_img_create(peripheral_row);
     lv_img_set_src(peripheral_icon, &sym_battery);
+    lv_obj_align(peripheral_icon, LV_ALIGN_LEFT_MID, 34, 0);
     peripheral_fill = lv_obj_create(peripheral_row);
     lv_obj_set_style_bg_color(peripheral_fill, lv_color_black(), 0);
     lv_obj_set_style_bg_opa(peripheral_fill, LV_OPA_COVER, 0);
@@ -73,10 +78,6 @@ int zmk_widget_peripheral_battery_status_init(
 
     lv_obj_align(col, LV_ALIGN_TOP_RIGHT, 0, 0);
     w->obj = col;
-
-    /* Position the icons against the initial "0%" text. */
-    lv_obj_align_to(central_icon, central_label, LV_ALIGN_OUT_RIGHT_MID, 2, 0);
-    lv_obj_align_to(peripheral_icon, peripheral_label, LV_ALIGN_OUT_RIGHT_MID, 2, 0);
     return 0;
 }
 
