@@ -100,20 +100,7 @@ int zmk_widget_peripheral_bongo_cat_init(
     struct zmk_widget_peripheral_bongo_cat *w, lv_obj_t *p)
 {
     w->obj = lv_animimg_create(p);
-    /* 1.3x zoom (LVGL: 256 = 1:1) so the cat reads better on this 128x128
-     * panel without hand-redrawing all 8 frames at a larger native size.
-     * Zoom is applied around the object's own center, growing its visual
-     * footprint symmetrically beyond its nominal 50x26 box -- the align
-     * offset below is shifted inward (rather than 0,0) so that growth
-     * lands inside the screen instead of clipping off the right/bottom
-     * edge. Picked 1.3x over a larger zoom specifically because the grown
-     * left edge starts to reach toward the modifier row's rightmost
-     * (Shift) icon at the bottom-left; a bigger zoom would need the
-     * modifier row moved too. Untested on hardware: if the mono display's
-     * fast path doesn't honor image zoom, or the offset needs tuning,
-     * this is the first value to revisit. */
-    lv_img_set_zoom(w->obj, 332);
-    lv_obj_align(w->obj, LV_ALIGN_BOTTOM_RIGHT, -10, -7);
+    lv_obj_align(w->obj, LV_ALIGN_BOTTOM_RIGHT, 0, 0);
     current_anim_state = ANIM_STATE_NONE;
     set_animation(w->obj, 0); /* start idle */
     return 0;
