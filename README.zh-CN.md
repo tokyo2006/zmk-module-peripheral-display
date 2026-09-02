@@ -12,10 +12,11 @@
 ## 功能
 
 - 层名（长名称自动滚动）
-- 修饰键图标（Windows / Mac 风格，可配置）
-- HID 指示灯（caps word）
-- 双电池（central + peripheral）
-- 输出状态（USB / BLE）
+- 修饰键图标（Windows / Mac 风格，可配置），按住时图标下方高亮下划线
+- HID 指示灯：大小写锁定 / 数字锁定，宿主机 LED 亮起时同步高亮下划线
+- 双电池（central + peripheral），各自带电量图标
+- 输出状态：USB / BLE 图标、HID 就绪与配对状态的对勾、当前 BLE 配置槽位
+  编号，以及标记当前实际选中传输方式的横线
 - WPM 速度表（可选布局）
 - Bongo cat 动画（随打字触发）
 
@@ -90,7 +91,28 @@ include:
 > 把画面翻转 180°。如果你的屏幕物理方向装反了，删掉 `rotate-180;` 这一行
 > —— 否则画面会上下颠倒。
 
-### 4. 配置 Kconfig（左右手都需要）
+### 4. 添加分体数据通道节点（左右手都需要）
+
+状态数据是通过一条专用的 BLE L2CAP 通道（ASDC，"arbitrary split data
+channel"）从 central 传给 peripheral 的，不是 GATT。它完全靠 devicetree
+里有没有这个节点来启用，没有单独的 Kconfig 开关。请在 central **和**
+peripheral 的 overlay 里都加上这个节点，两边的 `channel-id` 必须**一致**：
+
+```devicetree
+/ {
+    asdc0: asdc0 {
+        compatible = "zmk,peripheral-display-asdc";
+        channel-id = <1>;
+        status = "okay";
+    };
+};
+```
+
+只要有一侧漏加这个节点，`CONFIG_ZMK_ARBITRARY_SPLIT_DATA_CHANNEL` 在那一侧
+就不会被启用，数据也就发不出去/收不到——表现为副手屏幕一直卡在
+"NO LINK" 上。
+
+### 5. 配置 Kconfig（左右手都需要）
 
 显示画面渲染在 **peripheral** 侧，但它显示的状态是由 **central** 侧产生的。
 每一侧都需要几个配置项 —— 这些是最容易被遗漏的地方。
@@ -98,28 +120,20 @@ include:
 #### Peripheral（携带 `peripheral_lcd_ls013` 的那一侧）
 
 shield 自带的 `peripheral_lcd_ls013.conf` 已经开启了
-`CONFIG_ZMK_DISPLAY`、`CONFIG_ZMK_PERIPHERAL_DISPLAY`、接收端和各个 widget。
-你只需要自己再加**一个**配置：
-
-```conf
-# config/<peripheral_kb>.conf
-CONFIG_BT_GATT_CLIENT=y
-```
-
-peripheral 需要通过 GATT 订阅 central 的状态特征值，因此必须以 GATT
-*客户端*角色来构建 —— 否则链接时 `bt_gatt_discover` / `bt_gatt_subscribe`
-会未定义。
+`CONFIG_ZMK_DISPLAY`、`CONFIG_ZMK_PERIPHERAL_DISPLAY`、接收端和各个
+widget，第 4 步加的 ASDC 节点也已经自动打开了 L2CAP 通道本身——这一侧
+不需要再加任何配置。
 
 #### Central（连接电脑的那一侧）
 
-central 会打包自身状态并通知给 peripheral。它需要模块开关，以及转发代码
-读取的两个子系统：
+central 会打包自身状态并通过 ASDC 通道发出去。它需要模块开关，以及转发
+代码读取的两个子系统：
 
 ```conf
 # config/<central_kb>.conf
 CONFIG_ZMK_PERIPHERAL_DISPLAY=y   # 开启状态转发
 CONFIG_ZMK_WPM=y                  # 转发代码会调用 zmk_wpm_get_state()
-CONFIG_ZMK_HID_INDICATORS=y       # 转发代码会监听 zmk_hid_indicators_changed
+CONFIG_ZMK_HID_INDICATORS=y       # 转发代码会调用 zmk_hid_indicators_get_current_profile()
 ```
 
 > central **不需要**自己的显示。在 central 上开启
@@ -180,11 +194,12 @@ ZMK main / Zephyr 4.x 已经在该驱动里支持了 VCOM 翻转；它只是缺�
 3. 在 peripheral 屏幕上检查：
    - [ ] split 连接后 1 秒内出现层名
    - [ ] 切层后 <200ms 内更新
-   - [ ] 按下修饰键时图标切换
+   - [ ] 按下修饰键时图标 + 下划线切换
    - [ ] 打字时 Bongo cat 爪子动起来
-   - [ ] 两块电池都渲染出正确的百分比
-   - [ ] caps-word 触发时指示灯切换
-   - [ ] USB 插拔时输出状态变化
+   - [ ] 两块电池都渲染出正确的百分比和图标填充程度
+   - [ ] 触发大小写/数字锁定时 CAP/NUM 指示灯 + 下划线切换
+   - [ ] USB 插拔时输出状态变化，选中横线跟着实际使用的传输方式走，
+     BLE 配置槽位编号跟当前选中的一致
 
 ## 已知限制
 
@@ -198,10 +213,13 @@ ZMK main / Zephyr 4.x 已经在该驱动里支持了 VCOM 翻转；它只是缺�
 - 状态结构体（26 字节）形状复制自
   [prospector-zmk-module](https://github.com/t-ogura/zmk-config-prospector)
   （MIT）。
-- Bongo cat 动画帧来自
+- Bongo cat 动画帧、修饰键/输出状态/HID 就绪图标、BLE 配置槽位数字图标
+  均来自
   [englmaxi/zmk-dongle-display](https://github.com/englmaxi/zmk-dongle-display)
   （MIT）。见 `LICENSE-3RD-PARTY`。
-- UI 布局灵感来自 `zmk-dongle-display`。
+- UI 布局灵感来自 `zmk-dongle-display`。电池图标是本模块原创绘制的。
+- ASDC（arbitrary split data channel）传输层整合自
+  dmhuisma/zmk_arbitrary_split_data_channel（MIT）。
 
 ## 许可证
 

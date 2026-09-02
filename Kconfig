@@ -14,8 +14,8 @@ config ZMK_PERIPHERAL_STATUS_FORWARD
     default y
     depends on ZMK_PERIPHERAL_DISPLAY && ZMK_SPLIT_ROLE_CENTRAL
     help
-      Central packs zmk_status_adv_data and notifies the peripheral
-      over a custom GATT characteristic.
+      Central packs zmk_status_adv_data and sends it to the peripheral
+      over the ASDC BLE L2CAP data channel (see src/asdc).
 
 # T7 receive
 config ZMK_PERIPHERAL_STATUS_RECEIVE
@@ -23,8 +23,8 @@ config ZMK_PERIPHERAL_STATUS_RECEIVE
     default y
     depends on ZMK_PERIPHERAL_DISPLAY && !ZMK_SPLIT_ROLE_CENTRAL
     help
-      Peripheral subscribes to the central's notify characteristic
-      and writes incoming data into the shadow state.
+      Peripheral receives status over the ASDC channel and writes it
+      into the shadow state.
 
 # T8 widgets gate (referenced by T8's CMakeLists line above)
 config ZMK_PERIPHERAL_DISPLAY_WIDGETS
