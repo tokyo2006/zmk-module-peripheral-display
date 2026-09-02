@@ -35,15 +35,22 @@ struct peripheral_status_adv_data {
     uint8_t keyboard_id[4];
     uint8_t modifier_flags;
     uint8_t wpm_value;
-    uint8_t channel;
+    /* Raw zmk_hid_indicators_t bitmask (HID_INDICATOR_CAPS_LOCK / _NUM_LOCK /
+     * _SCROLL_LOCK from <dt-bindings/zmk/hid_indicators.h>). This field was
+     * an unused placeholder ("channel") in prospector's original layout --
+     * repurposed here since nothing else in this codebase reads or writes
+     * it as a channel. */
+    uint8_t hid_indicators;
 } __packed;
 
 #define PERIPHERAL_STATUS_PAYLOAD_SIZE sizeof(struct peripheral_status_adv_data)
 _Static_assert(PERIPHERAL_STATUS_PAYLOAD_SIZE == 26,
                "peripheral_status_adv_data must be exactly 26 bytes");
 
-/* Status flags (mirror prospector's bits) */
-#define PERIPHERAL_STATUS_FLAG_CAPS_WORD     (1 << 0)
+/* Status flags (mirror prospector's bits). Bit 0 is unused: caps/num/scroll
+ * lock now live in the hid_indicators field, using ZMK's own
+ * HID_INDICATOR_CAPS_LOCK/_NUM_LOCK/_SCROLL_LOCK bit positions instead of a
+ * separate set of flags here. */
 #define PERIPHERAL_STATUS_FLAG_CHARGING      (1 << 1)
 #define PERIPHERAL_STATUS_FLAG_USB_CONNECTED (1 << 2)
 #define PERIPHERAL_STATUS_FLAG_USB_HID_READY (1 << 3)

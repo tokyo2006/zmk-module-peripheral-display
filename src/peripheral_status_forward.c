@@ -30,6 +30,7 @@ LOG_MODULE_DECLARE(peripheral_status, CONFIG_ZMK_LOG_LEVEL);
 #include <zmk/usb.h>
 #include <zmk/endpoints.h>
 #include <zmk/hid.h>
+#include <zmk/hid_indicators.h>
 #include <zmk/activity.h>
 
 #include <zmk/event_manager.h>
@@ -113,6 +114,8 @@ static void fill_current_state(struct peripheral_status_adv_data *s) {
     if (wpm < 0)   wpm = 0;
     if (wpm > 255) wpm = 255;
     s->wpm_value = (uint8_t)wpm;
+
+    s->hid_indicators = (uint8_t)zmk_hid_indicators_get_current_profile();
 }
 
 static struct peripheral_debounce_state debounce = {0};
