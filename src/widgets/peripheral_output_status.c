@@ -56,6 +56,10 @@ int zmk_widget_peripheral_output_status_init(
     lv_obj_set_style_bg_color(selection_bar, lv_color_black(), 0);
     lv_obj_set_style_bg_opa(selection_bar, LV_OPA_COVER, 0);
     lv_obj_set_style_border_width(selection_bar, 0, 0);
+    /* The mono theme's default object style sets radius=2 on every plain
+     * lv_obj_create(); on a 2px-tall bar that rounds it away to nothing
+     * visible. */
+    lv_obj_set_style_radius(selection_bar, 0, 0);
     lv_obj_align_to(selection_bar, usb_img, LV_ALIGN_OUT_TOP_MID, 0, -1);
 
     lv_obj_align(row, LV_ALIGN_TOP_LEFT, 0, 0);

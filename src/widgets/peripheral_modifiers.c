@@ -56,6 +56,10 @@ int zmk_widget_peripheral_modifiers_init(
         lv_obj_set_style_bg_color(symbols[i].underline, lv_color_black(), 0);
         lv_obj_set_style_bg_opa(symbols[i].underline, LV_OPA_COVER, 0);
         lv_obj_set_style_border_width(symbols[i].underline, 0, 0);
+        /* The mono theme's default object style sets radius=2 on every
+         * plain lv_obj_create(); on a 2px-tall bar that rounds it away to
+         * nothing visible. */
+        lv_obj_set_style_radius(symbols[i].underline, 0, 0);
         lv_obj_align_to(symbols[i].underline, symbols[i].symbol,
                         LV_ALIGN_OUT_BOTTOM_MID, 0, 1);
         lv_obj_add_flag(symbols[i].underline, LV_OBJ_FLAG_HIDDEN);

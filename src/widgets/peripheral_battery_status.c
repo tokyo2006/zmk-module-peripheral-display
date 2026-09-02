@@ -51,6 +51,9 @@ int zmk_widget_peripheral_battery_status_init(
     lv_obj_set_style_bg_color(central_fill, lv_color_black(), 0);
     lv_obj_set_style_bg_opa(central_fill, LV_OPA_COVER, 0);
     lv_obj_set_style_border_width(central_fill, 0, 0);
+    /* The mono theme's default object style sets radius=2 on every plain
+     * lv_obj_create(); on a 4px-tall bar that rounds most of it away. */
+    lv_obj_set_style_radius(central_fill, 0, 0);
     lv_obj_set_size(central_fill, 0, 4);
 
     peripheral_row = lv_obj_create(col);
@@ -65,6 +68,7 @@ int zmk_widget_peripheral_battery_status_init(
     lv_obj_set_style_bg_color(peripheral_fill, lv_color_black(), 0);
     lv_obj_set_style_bg_opa(peripheral_fill, LV_OPA_COVER, 0);
     lv_obj_set_style_border_width(peripheral_fill, 0, 0);
+    lv_obj_set_style_radius(peripheral_fill, 0, 0);
     lv_obj_set_size(peripheral_fill, 0, 4);
 
     lv_obj_align(col, LV_ALIGN_TOP_RIGHT, 0, 0);
