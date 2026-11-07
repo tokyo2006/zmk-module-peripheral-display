@@ -92,5 +92,17 @@ config ZMK_PERIPHERAL_DISPLAY_WIDGET_BONGO_CAT
     default y
     depends on ZMK_PERIPHERAL_DISPLAY_WIDGETS
 
+config ZMK_PERIPHERAL_DISPLAY_THEME_OPERATOR
+    bool "Operator theme (128x128 mono)"
+    default n
+    depends on ZMK_PERIPHERAL_DISPLAY_WIDGETS
+    depends on ZMK_PERIPHERAL_DISPLAY_WIDGET_WPM
+    depends on ZMK_PERIPHERAL_DISPLAY_WIDGET_LAYER
+    help
+      Use the Prospector OPERATOR-inspired layout: a segmented WPM meter
+      across the top, large layer name and layer dots, output/HID status
+      in the top corners, and battery + modifier row at the bottom.
+      Adapted for the 128x128 mono Sharp LS013 panel.
+
 # ASDC BLE L2CAP data channel (central -> peripheral)
 rsource "src/asdc/Kconfig"

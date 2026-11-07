@@ -25,10 +25,13 @@
 #if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_WPM)
 #include "widgets/peripheral_wpm_status.h"
 #endif
+#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_THEME_OPERATOR)
+#include "widgets/peripheral_wpm_meter.h"
+#endif
 #if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_CENTRAL_NAME)
 #include "widgets/peripheral_central_name.h"
 #endif
-#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_BONGO_CAT)
+#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_BONGO_CAT) && !IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_THEME_OPERATOR)
 #include "widgets/peripheral_bongo_cat.h"
 #endif
 
@@ -64,12 +67,17 @@ extern int zmk_widget_peripheral_wpm_status_init(
     struct zmk_widget_peripheral_wpm_status *w, lv_obj_t *p);
 static struct zmk_widget_peripheral_wpm_status wpm_w;
 #endif
+#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_THEME_OPERATOR)
+static struct zmk_widget_peripheral_wpm_meter wpm_meter_w;
+#define OPERATOR_LAYER_DOT_COUNT 4
+static lv_obj_t *operator_layer_dots[OPERATOR_LAYER_DOT_COUNT];
+#endif
 #if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_CENTRAL_NAME)
 extern int zmk_widget_peripheral_central_name_init(
     struct zmk_widget_peripheral_central_name *w, lv_obj_t *p);
 static struct zmk_widget_peripheral_central_name central_name_w;
 #endif
-#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_BONGO_CAT)
+#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_BONGO_CAT) && !IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_THEME_OPERATOR)
 extern int zmk_widget_peripheral_bongo_cat_init(
     struct zmk_widget_peripheral_bongo_cat *w, lv_obj_t *p);
 static struct zmk_widget_peripheral_bongo_cat bongo_cat_w;
@@ -83,16 +91,20 @@ static bool had_link;
 static void set_link_visible(bool linked) {
     if (linked) {
         lv_obj_add_flag(no_link_label, LV_OBJ_FLAG_HIDDEN);
-#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_BONGO_CAT)
+#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_BONGO_CAT) && !IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_THEME_OPERATOR)
         lv_obj_clear_flag(bongo_cat_w.obj, LV_OBJ_FLAG_HIDDEN);
 #endif
     } else {
         lv_obj_clear_flag(no_link_label, LV_OBJ_FLAG_HIDDEN);
-#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_BONGO_CAT)
+#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_BONGO_CAT) && !IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_THEME_OPERATOR)
         lv_obj_add_flag(bongo_cat_w.obj, LV_OBJ_FLAG_HIDDEN);
 #endif
     }
 }
+
+#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_THEME_OPERATOR)
+static void operator_layer_dots_update(uint8_t layer);
+#endif
 
 static void poll_shadow(lv_timer_t *t) {
     (void)t;
@@ -130,13 +142,53 @@ static void poll_shadow(lv_timer_t *t) {
 #if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_WPM)
     zmk_widget_peripheral_wpm_status_update(&wpm_w, &s.data);
 #endif
+#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_THEME_OPERATOR)
+    zmk_widget_peripheral_wpm_meter_update(&wpm_meter_w, &s.data);
+    operator_layer_dots_update(s.data.active_layer);
+#endif
 #if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_CENTRAL_NAME)
     zmk_widget_peripheral_central_name_update(&central_name_w, &s.data);
 #endif
-#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_BONGO_CAT)
+#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_BONGO_CAT) && !IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_THEME_OPERATOR)
     zmk_widget_peripheral_bongo_cat_update(&bongo_cat_w, &s.data);
 #endif
 }
+
+#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_THEME_OPERATOR)
+
+static void operator_layer_dots_init(lv_obj_t *parent) {
+    lv_obj_t *row = lv_obj_create(parent);
+    lv_obj_set_size(row, 102, 4);
+    lv_obj_set_style_bg_opa(row, LV_OPA_TRANSP, LV_PART_MAIN);
+    lv_obj_set_style_border_width(row, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(row, 0, LV_PART_MAIN);
+    lv_obj_align(row, LV_ALIGN_TOP_MID, 0, 82);
+
+    for (int i = 0; i < OPERATOR_LAYER_DOT_COUNT; i++) {
+        operator_layer_dots[i] = lv_obj_create(row);
+        lv_obj_set_size(operator_layer_dots[i], 24, 4);
+        lv_obj_set_pos(operator_layer_dots[i], i * 26, 0);
+        lv_obj_set_style_bg_color(operator_layer_dots[i], lv_color_white(), LV_PART_MAIN);
+        lv_obj_set_style_bg_opa(operator_layer_dots[i], LV_OPA_COVER, LV_PART_MAIN);
+        lv_obj_set_style_border_color(operator_layer_dots[i], lv_color_black(), LV_PART_MAIN);
+        lv_obj_set_style_border_width(operator_layer_dots[i], 1, LV_PART_MAIN);
+        lv_obj_set_style_radius(operator_layer_dots[i], 0, LV_PART_MAIN);
+        lv_obj_set_style_pad_all(operator_layer_dots[i], 0, LV_PART_MAIN);
+    }
+}
+
+static void operator_layer_dots_update(uint8_t layer) {
+    if (layer >= OPERATOR_LAYER_DOT_COUNT) {
+        layer = OPERATOR_LAYER_DOT_COUNT - 1;
+    }
+    for (int i = 0; i < OPERATOR_LAYER_DOT_COUNT; i++) {
+        lv_obj_set_style_bg_color(operator_layer_dots[i],
+                                  i == layer ? lv_color_black() : lv_color_white(),
+                                  LV_PART_MAIN);
+    }
+}
+
+#endif
 
 int peripheral_display_init(lv_obj_t *parent) {
     /* The status screen must be sized before children align against it.
@@ -183,22 +235,61 @@ int peripheral_display_init(lv_obj_t *parent) {
 #if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_CENTRAL_NAME)
     zmk_widget_peripheral_central_name_init(&central_name_w, parent);
 #endif
-#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_BONGO_CAT)
+#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_BONGO_CAT) && !IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_THEME_OPERATOR)
     zmk_widget_peripheral_bongo_cat_init(&bongo_cat_w, parent);
     lv_obj_align(bongo_cat_w.obj, LV_ALIGN_BOTTOM_RIGHT, 0, -7);
 #endif
 #if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_WPM)
     zmk_widget_peripheral_wpm_status_init(&wpm_w, parent);
+#if !IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_THEME_OPERATOR)
     /* Now grouped with the layer name in the middle band instead of
      * crowding the bongo cat's bottom edge. */
     lv_obj_align_to(wpm_w.obj, layer_w.obj, LV_ALIGN_OUT_BOTTOM_MID, 0, 4);
+#endif
+#endif
+
+#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_THEME_OPERATOR)
+    /* Operator layout, adapted for the 128x128 mono panel:
+     *   top row: output (left) / HID indicators (right)
+     *   y=24-40: segmented WPM meter
+     *   y=42:    large WPM number
+     *   y=62:    large layer name
+     *   y=82:    layer dots
+     *   bottom:  modifiers (left) / battery (right)
+     */
+#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_OUTPUT)
+    lv_obj_align(output_w.obj, LV_ALIGN_TOP_LEFT, 0, 0);
+#endif
+#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_HID_INDICATORS)
+    lv_obj_align(hid_indicators_w.obj, LV_ALIGN_TOP_RIGHT, 0, 0);
+#endif
+#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_MODIFIERS)
+    lv_obj_align(modifiers_w.obj, LV_ALIGN_BOTTOM_LEFT, 0, 0);
+#endif
+#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_BATTERY)
+    lv_obj_align(battery_w.obj, LV_ALIGN_BOTTOM_RIGHT, 0, 0);
+#endif
+#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_LAYER)
+    lv_obj_align(layer_w.obj, LV_ALIGN_TOP_MID, 0, 62);
+#endif
+#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_WIDGET_WPM)
+    lv_obj_set_style_text_font(wpm_w.obj, &lv_font_unscii_16, 0);
+    lv_obj_align(wpm_w.obj, LV_ALIGN_TOP_LEFT, 1, 42);
+    zmk_widget_peripheral_wpm_meter_init(&wpm_meter_w, parent);
+    lv_obj_align(wpm_meter_w.obj, LV_ALIGN_TOP_LEFT, 1, 24);
+#endif
+    operator_layer_dots_init(parent);
 #endif
 
     no_link_label = lv_label_create(parent);
     lv_label_set_text(no_link_label, "NO LINK");
     lv_obj_set_style_text_font(no_link_label, &lv_font_unscii_8, 0);
+#if IS_ENABLED(CONFIG_ZMK_PERIPHERAL_DISPLAY_THEME_OPERATOR)
+    lv_obj_align(no_link_label, LV_ALIGN_CENTER, 0, 0);
+#else
     /* Offset above the center layer label so the two don't overlap. */
     lv_obj_align(no_link_label, LV_ALIGN_CENTER, 0, -24);
+#endif
 
     /* Visible initially: shows "NO LINK" until the first status arrives. */
     had_link = false;
